@@ -226,50 +226,80 @@ with col2:
             pass
 
 st.markdown("---")
-st.subheader("Ask a question")
+tabs = st.tabs(["Semantic (TF‑IDF)", "Semantic (Transformers)"])
+
 if not data:
-    st.write("Load JSON‑LD first.")
+    for t in tabs:
+        with t:
+            st.info("Load or generate a JSON‑LD file to begin.")
 else:
-    # Show available embedded questions, if present
+    # Shared embedded questions
     embedded = [qobj.get("name", "") for qobj in (data.get("subjectOf") or []) if isinstance(qobj, dict) and qobj.get("@type") == "Question"]
-    if embedded:
-        st.caption("From JSON‑LD (FAQ):")
-        sel = st.selectbox("Choose a question", options=[""] + embedded, index=0)
-    else:
-        sel = ""
+    default_q = (embedded[0] if embedded else "How do I install the sdk?")
 
-    default_q = sel or "How do I install the sdk?"
-    qtext = st.text_input("Your question", value=default_q)
-    topk = st.slider("Results", min_value=1, max_value=5, value=3, help="Number of semantic matches to show")
+    # Tab 1: TF‑IDF semantic (fast)
+    with tabs[0]:
+        qtext = st.text_input("Your question", value=default_q, key="q_fast")
+        topk = st.slider("Results", 1, 5, 3, key="k_fast")
 
-    @st.cache_resource(show_spinner=False)
-    def _get_retriever(payload_json: str):
-        # Cache per distinct payload
-        payload = json.loads(payload_json)
-        return q.TfidfRetriever.from_data(payload)
+        @st.cache_resource(show_spinner=False)
+        def _get_retriever(payload_json: str):
+            payload = json.loads(payload_json)
+            return q.TfidfRetriever.from_data(payload)
 
-    if st.button("Answer"):
-        try:
-            retriever = _get_retriever(json.dumps(data, sort_keys=True))
-            results = retriever.search(qtext, top_k=topk)
-        except Exception:
-            # Fallback to stateless API
-            results = q.retrieve_semantic(qtext, data, top_k=topk)
-        if not results:
-            st.error("No relevant content found.")
-        else:
-            top = results[0]
-            st.caption(f"Semantic match: {top['label']} (score={top['score']:.2f})")
-            if top["label"] == "example":
-                st.code(top["text"], language="python")
+        if st.button("Answer (TF‑IDF)"):
+            try:
+                retriever = _get_retriever(json.dumps(data, sort_keys=True))
+                results = retriever.search(qtext, top_k=topk)
+            except Exception:
+                results = q.retrieve_semantic(qtext, data, top_k=topk)
+            if not results:
+                st.error("No relevant content found.")
             else:
-                st.text(top["text"])
-            # Show other matches
-            if len(results) > 1:
-                with st.expander("Other relevant snippets"):
-                    for r in results[1:]:
-                        st.markdown(f"- {r['label']} (score={r['score']:.2f})")
-                        if r["label"] == "example":
-                            st.code(r["text"], language="python")
-                        else:
-                            st.text(r["text"])
+                top = results[0]
+                st.caption(f"Match: {top['label']} (score={top['score']:.2f})")
+                if top["label"] == "example":
+                    st.code(top["text"], language="python")
+                else:
+                    st.text(top["text"])
+                if len(results) > 1:
+                    with st.expander("Other relevant snippets"):
+                        for r in results[1:]:
+                            st.markdown(f"- {r['label']} (score={r['score']:.2f})")
+                            if r["label"] == "example":
+                                st.code(r["text"], language="python")
+                            else:
+                                st.text(r["text"])
+
+    # Tab 2: Transformers semantic (optional heavy)
+    with tabs[1]:
+        qtext2 = st.text_input("Your question", value=default_q, key="q_trf")
+        topk2 = st.slider("Results", 1, 5, 3, key="k_trf")
+        try:
+            import semantic_query as sq
+
+            @st.cache_resource(show_spinner=False)
+            def _get_semantic_engine(path: str):
+                return sq.SemanticQueryEngine(path)
+
+            engine = _get_semantic_engine("project_knowledge.jsonld")
+            if st.button("Answer (Transformers)"):
+                results = engine.semantic_search(qtext2, top_k=topk2)
+                if not results:
+                    st.warning("No semantic results (or transformer model unavailable); falling back to engine.query().")
+                    st.markdown(engine.query(qtext2))
+                else:
+                    # Show first as rich markdown if example/code
+                    chunk, score = results[0]
+                    st.caption(f"Similarity: {score:.2f}  •  Type: {chunk['type']}")
+                    text = chunk.get("text", "")
+                    if chunk.get("type") == "example":
+                        st.code(text, language="python")
+                    else:
+                        st.text(text)
+                    if len(results) > 1:
+                        with st.expander("Other relevant chunks"):
+                            for c, s in results[1:]:
+                                st.markdown(f"- {c['type']} (score={s:.2f}) — {c.get('text','')[:160]}…")
+        except Exception as e:
+            st.info("sentence-transformers not installed; using TF‑IDF tab above.")
