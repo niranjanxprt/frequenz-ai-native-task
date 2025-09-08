@@ -16,6 +16,7 @@ from typing import Optional
 import glob
 import streamlit as st
 import requests
+import branding
 
 import query as q
 import visualize as viz
@@ -31,7 +32,11 @@ def load_jsonld(path: Optional[str], uploaded_bytes: Optional[bytes]):
 
 
 st.set_page_config(page_title="Frequenz SDK — AI‑Native Graph", layout="wide")
-st.title("Frequenz SDK — AI‑Native Knowledge Graph")
+branding.inject_branding()
+branding.hero(
+    "Frequenz SDK — AI‑Native Knowledge Graph",
+    "Branded accents; runs on localhost only",
+)
 st.caption("Visualize the JSON‑LD and ask questions about the SDK")
 
 with st.sidebar:

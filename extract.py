@@ -27,13 +27,42 @@ RAW_DEFAULT = "https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-pyt
 DEFAULT_BRANCH = "main"
 
 def fetch_readme(repo_url: str, branch: str) -> str:
-    # Try common paths
-    for fname in ["README.md", "readme.md", "Readme.md"]:
+    """Fetch README text from a raw GitHub URL base.
+
+    Tries several common filename variants and adds headers to reduce 403/429s.
+    Raises a RuntimeError with guidance to use --local-readme if all attempts fail.
+    """
+    session = requests.Session()
+    session.headers.update(
+        {
+            "User-Agent": "ai-native-kg/0.1 (+https://github.com/)",
+            "Accept": "text/plain, text/markdown, */*",
+        }
+    )
+    candidates = [
+        "README.md",
+        "README.MD",
+        "Readme.md",
+        "readme.md",
+        "README.rst",
+        "docs/README.md",
+        "README",
+    ]
+    errors = []
+    for fname in candidates:
         url = f"{repo_url}/{branch}/{fname}"
-        r = requests.get(url, timeout=20)
-        if r.status_code == 200 and len(r.text) > 200:
-            return r.text
-    raise RuntimeError(f"Could not fetch README from {repo_url}/{branch}")
+        try:
+            r = session.get(url, timeout=20)
+            if r.status_code == 200 and len(r.text) > 120:
+                return r.text
+            errors.append(f"{url} -> {r.status_code}")
+        except Exception as e:
+            errors.append(f"{url} -> {e}")
+    raise RuntimeError(
+        "Could not fetch README from "
+        f"{repo_url}/{branch}. Tried: " + ", ".join(candidates) + ". "
+        "Tip: run with --local-readme path/to/README.md to parse a local file."
+    )
 
 def md_to_soup(md_text: str) -> BeautifulSoup:
     html = MarkdownIt().render(md_text)
