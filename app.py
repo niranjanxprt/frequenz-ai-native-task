@@ -174,6 +174,16 @@ with col2:
         nodes, edges = viz.build_nodes_edges(data)
         dot = viz.to_dot(nodes, edges)
         st.graphviz_chart(dot, use_container_width=True)
+        try:
+            G = viz.build_nx_graph(data)
+            m = viz.nx_basic_metrics(G)
+            st.caption(
+                f"Nodes: {m.get('nodes', 0)}  •  Edges: {m.get('edges', 0)}  "
+                f"•  Top in-degree: {m.get('top_in_degree', [])}  "
+                f"•  Top out-degree: {m.get('top_out_degree', [])}"
+            )
+        except Exception:
+            pass
 
 st.markdown("---")
 st.subheader("Ask a question")
@@ -191,10 +201,15 @@ else:
     default_q = sel or "How do I install the sdk?"
     qtext = st.text_input("Your question", value=default_q)
     if st.button("Answer"):
-        bucket = q.pick_bucket(qtext)
-        ans = q.answer(data, bucket)
-        st.caption(f"Bucket: {bucket}")
-        if bucket == "example":
+        try:
+            ans, label = q.answer_semantic(qtext, data)
+            st.caption(f"Match: {label}")
+        except Exception:
+            # Fallback to legacy bucket flow
+            label = q.pick_bucket(qtext)
+            ans = q.answer(data, label)
+            st.caption(f"Bucket: {label}")
+        if label == "example":
             st.code(ans, language="python")
         else:
             st.text(ans)

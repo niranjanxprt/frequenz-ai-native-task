@@ -60,7 +60,8 @@ Root type: `SoftwareApplication` (schema.org) with:
 ## Process
 - Fetch raw README from GitHub, render Markdown → HTML, parse sections/bullets/code
 - Heuristics assemble a compact JSON‑LD
-- Retrieval maps a question to buckets (purpose/install/example/features/license/dependencies)
+- Retrieval: semantic matching with TF‑IDF cosine over purpose/install/example/features/license/dependencies
+  (falls back to keyword buckets if sklearn is unavailable)
 
 ## Improvements
 - Add embeddings + BM25 hybrid over per-section chunks (PGVector)

@@ -20,6 +20,7 @@ import shlex
 import subprocess
 from pathlib import Path
 from typing import Dict, Optional
+import networkx as nx
 
 
 def esc(s: str) -> str:
@@ -109,6 +110,35 @@ def build_nodes_edges(data: dict):
             edges.append((qid, aid, "answer"))
 
     return nodes, edges
+
+
+def build_nx_graph(data: dict) -> nx.DiGraph:
+    """Construct a NetworkX directed graph from the JSON-LD structure.
+
+    Nodes carry attributes: label, shape. Edges carry attribute: label.
+    """
+    nodes, edges = build_nodes_edges(data)
+    G = nx.DiGraph()
+    for nid, label, attrs in nodes:
+        G.add_node(nid, label=label, **attrs)
+    for src, dst, label in edges:
+        G.add_edge(src, dst, label=label)
+    return G
+
+
+def nx_basic_metrics(G: nx.DiGraph) -> Dict[str, object]:
+    metrics: Dict[str, object] = {
+        "nodes": G.number_of_nodes(),
+        "edges": G.number_of_edges(),
+    }
+    try:
+        indeg = sorted(G.in_degree(), key=lambda x: x[1], reverse=True)[:3]
+        outdeg = sorted(G.out_degree(), key=lambda x: x[1], reverse=True)[:3]
+        metrics["top_in_degree"] = indeg
+        metrics["top_out_degree"] = outdeg
+    except Exception:
+        pass
+    return metrics
 
 
 def read_streamlit_theme(config_path: str = ".streamlit/config.toml") -> Dict[str, str]:
