@@ -20,7 +20,14 @@ import shlex
 import subprocess
 from pathlib import Path
 from typing import Dict, Optional
-import networkx as nx
+try:
+    import networkx as nx  # optional
+except Exception:  # pragma: no cover
+    nx = None
+try:
+    from pyvis.network import Network  # optional
+except Exception:  # pragma: no cover
+    Network = None
 
 
 def esc(s: str) -> str:
@@ -112,11 +119,13 @@ def build_nodes_edges(data: dict):
     return nodes, edges
 
 
-def build_nx_graph(data: dict) -> nx.DiGraph:
+def build_nx_graph(data: dict):
     """Construct a NetworkX directed graph from the JSON-LD structure.
 
     Nodes carry attributes: label, shape. Edges carry attribute: label.
     """
+    if nx is None:
+        raise ImportError("networkx is not installed")
     nodes, edges = build_nodes_edges(data)
     G = nx.DiGraph()
     for nid, label, attrs in nodes:
@@ -126,7 +135,9 @@ def build_nx_graph(data: dict) -> nx.DiGraph:
     return G
 
 
-def nx_basic_metrics(G: nx.DiGraph) -> Dict[str, object]:
+def nx_basic_metrics(G) -> Dict[str, object]:
+    if nx is None:
+        return {"nodes": 0, "edges": 0}
     metrics: Dict[str, object] = {
         "nodes": G.number_of_nodes(),
         "edges": G.number_of_edges(),
@@ -139,6 +150,39 @@ def nx_basic_metrics(G: nx.DiGraph) -> Dict[str, object]:
     except Exception:
         pass
     return metrics
+
+
+def to_pyvis_html(data: dict, height: str = "600px", width: str = "100%") -> str:
+    """Return an interactive HTML (PyVis/vis.js) for the graph.
+
+    Requires pyvis. Raises ImportError if missing.
+    """
+    if Network is None:
+        raise ImportError("pyvis is not installed")
+    G = build_nx_graph(data)
+    net = Network(height=height, width=width, directed=True, notebook=False)
+    net.barnes_hut()
+    # Add nodes
+    for nid, attrs in G.nodes(data=True):
+        label = attrs.get("label", nid)
+        shape = attrs.get("shape", "dot")
+        # Map shapes roughly
+        shape_map = {
+            "doubleoctagon": "ellipse",
+            "ellipse": "ellipse",
+            "note": "box",
+            "component": "box",
+            "folder": "box",
+            "box": "box",
+            "oval": "ellipse",
+        }
+        net.add_node(nid, label=label, title=label, shape=shape_map.get(shape, "dot"))
+    # Add edges
+    for u, v, attrs in G.edges(data=True):
+        label = attrs.get("label", "")
+        net.add_edge(u, v, label=label, arrows="to", physics=True, smooth=True)
+    # Generate HTML string
+    return net.generate_html()
 
 
 def read_streamlit_theme(config_path: str = ".streamlit/config.toml") -> Dict[str, str]:

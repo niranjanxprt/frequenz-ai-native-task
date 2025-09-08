@@ -171,9 +171,20 @@ with col2:
     if not data:
         st.empty()
     else:
+        view = st.radio("View", ["Interactive", "Static"], index=0, horizontal=True)
         nodes, edges = viz.build_nodes_edges(data)
-        dot = viz.to_dot(nodes, edges)
-        st.graphviz_chart(dot, use_container_width=True)
+        if view == "Interactive":
+            try:
+                from streamlit.components.v1 import html as st_html
+                html = viz.to_pyvis_html(data, height="600px")
+                st_html(html, height=600)
+            except Exception as e:
+                st.error(f"Interactive view unavailable: {e}. Falling back to static.")
+                dot = viz.to_dot(nodes, edges)
+                st.graphviz_chart(dot, use_container_width=True)
+        else:
+            dot = viz.to_dot(nodes, edges)
+            st.graphviz_chart(dot, use_container_width=True)
         try:
             G = viz.build_nx_graph(data)
             m = viz.nx_basic_metrics(G)
@@ -201,15 +212,22 @@ else:
     default_q = sel or "How do I install the sdk?"
     qtext = st.text_input("Your question", value=default_q)
     if st.button("Answer"):
-        try:
-            ans, label = q.answer_semantic(qtext, data)
-            st.caption(f"Match: {label}")
-        except Exception:
-            # Fallback to legacy bucket flow
-            label = q.pick_bucket(qtext)
-            ans = q.answer(data, label)
-            st.caption(f"Bucket: {label}")
-        if label == "example":
-            st.code(ans, language="python")
+        results = q.retrieve_semantic(qtext, data, top_k=3)
+        if not results:
+            st.error("No relevant content found.")
         else:
-            st.text(ans)
+            top = results[0]
+            st.caption(f"Semantic match: {top['label']} (score={top['score']:.2f})")
+            if top["label"] == "example":
+                st.code(top["text"], language="python")
+            else:
+                st.text(top["text"])
+            # Show other matches
+            if len(results) > 1:
+                with st.expander("Other relevant snippets"):
+                    for r in results[1:]:
+                        st.markdown(f"- {r['label']} (score={r['score']:.2f})")
+                        if r["label"] == "example":
+                            st.code(r["text"], language="python")
+                        else:
+                            st.text(r["text"])
