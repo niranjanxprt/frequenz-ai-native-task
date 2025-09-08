@@ -45,8 +45,10 @@ temp/
 .env
 .env.*
 
-# Streamlit runtime artifacts
-.streamlit/
+# Streamlit
+# Track config but ignore other artifacts
+.streamlit/*
+!.streamlit/config.toml
 .streamlit.*.pid
 .streamlit.*.log
 
@@ -55,4 +57,3 @@ temp/
 *.svg
 project_knowledge.dot
 project_knowledge.svg
-
