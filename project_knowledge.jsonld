@@ -6,13 +6,14 @@
   "@type": "SoftwareApplication",
   "name": "Frequenz SDK for Python",
   "applicationCategory": "Energy management / Microgrid orchestration",
-  "description": "A development kit to interact with the Frequenz development platform.",
+  "description": "",
   "programmingLanguage": "Python",
   "codeRepository": "https://github.com/frequenz-floss/frequenz-sdk-python",
   "author": {
     "@type": "Organization",
     "name": "Frequenz"
   },
+  "isAccessibleForFree": true,
   "license": "https://opensource.org/licenses/MIT",
   "softwareRequirements": [
     "Python 3.11",
@@ -24,39 +25,25 @@
     "step": [
       {
         "@type": "HowToStep",
-        "text": "pip install frequenz-sdk"
+        "text": "python3 -m pip install frequenz-sdk"
       }
     ]
   },
-  "featureList": [
-    "Actor-model based orchestration with frequenz.channels",
-    "Component pools for batteries, PV, and EV chargers",
-    "Time-series streaming and resampling utilities",
-    "gRPC-based microgrid connectivity and sandbox support"
-  ],
   "exampleOfWork": [
     {
       "@type": "SoftwareSourceCode",
       "programmingLanguage": "Python",
       "codeSampleType": "example",
-      "text": "import asyncio\nfrom datetime import timedelta\nfrom frequenz.sdk import microgrid\nfrom frequenz.sdk.actor import ResamplerConfig\n\nasync def run() -> None:\n    server_url = \"grpc://microgrid.sandbox.api.frequenz.io:62060\"\n    await microgrid.initialize(\n        server_url,\n        ResamplerConfig(resampling_period=timedelta(seconds=1)),\n    )\n    grid_power_rx = microgrid.grid().power.new_receiver()\n    async for point in grid_power_rx:\n        print(point.value)\n\nif __name__ == \"__main__\":\n    asyncio.run(run())"
+      "text": "python3 -m venv .venv\n. .venv/bin/activate"
     }
   ],
   "subjectOf": [
     {
       "@type": "Question",
-      "name": "What is the Frequenz SDK for?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "A development kit to interact with the Frequenz development platform."
-      }
-    },
-    {
-      "@type": "Question",
       "name": "How do I install the SDK?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Installation:\n- pip install frequenz-sdk"
+        "text": "Installation:\n- python3 -m pip install frequenz-sdk"
       }
     },
     {
@@ -64,15 +51,7 @@
       "name": "Show me an example of how to use it.",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "import asyncio\nfrom datetime import timedelta\nfrom frequenz.sdk import microgrid\nfrom frequenz.sdk.actor import ResamplerConfig\n\nasync def run() -> None:\n    server_url = \"grpc://microgrid.sandbox.api.frequenz.io:62060\"\n    await microgrid.initialize(\n        server_url,\n        ResamplerConfig(resampling_period=timedelta(seconds=1)),\n    )\n    grid_power_rx = microgrid.grid().power.new_receiver()\n    async for point in grid_power_rx:\n        print(point.value)\n\nif __name__ == \"__main__\":\n    asyncio.run(run())"
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "What features does it have?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Key features:\n- Actor-model based orchestration with frequenz.channels\n- Component pools for batteries, PV, and EV chargers\n- Time-series streaming and resampling utilities\n- gRPC-based microgrid connectivity and sandbox support"
+        "text": "python3 -m venv .venv\n. .venv/bin/activate"
       }
     },
     {
