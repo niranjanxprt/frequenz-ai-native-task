@@ -181,8 +181,8 @@ with col2:
         if view == "Interactive (PyVis)":
             try:
                 from streamlit.components.v1 import html as st_html
-                html = viz.to_pyvis_html(data, height="700px", accent="#62B5B1", dark=True)
-                st_html(html, height=720)
+                html = viz.to_pyvis_html(data, height="650px", accent="#62B5B1", dark=True)
+                st_html(html, height=600)
                 st.download_button(
                     label="Download interactive HTML",
                     data=html,
