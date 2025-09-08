@@ -9,7 +9,7 @@ import sys
 import json
 import re
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 def load_knowledge(path="project_knowledge.jsonld"):
     return json.loads(Path(path).read_text(encoding="utf-8"))
@@ -140,8 +140,36 @@ def answer_semantic(question: str, data) -> Tuple[str, str]:
     """Return (answer, label) using semantic matching with fallback to keyword buckets."""
     label = semantic_best_bucket(question, data)
     if not label:
-        label = pick_bucket(question)
+        return "No answer found.", "unknown"
     return answer(data, label), label
+
+
+def retrieve_semantic(question: str, data, top_k: int = 3) -> List[Dict[str, object]]:
+    """Return top-k semantic matches with scores and texts.
+
+    Each result: {"label": str, "text": str, "score": float}
+    """
+    docs = _build_docs(data)
+    if not docs:
+        return []
+    try:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.metrics.pairwise import cosine_similarity
+    except Exception:
+        # If sklearn missing, fall back to a single best using keyword bucketing
+        label = pick_bucket(question)
+        return [{"label": label, "text": answer(data, label), "score": 0.0}]
+
+    texts = [t for _, t in docs]
+    labels = [l for l, _ in docs]
+    vec = TfidfVectorizer(stop_words="english")
+    mat = vec.fit_transform(texts + [question])
+    sims = cosine_similarity(mat[-1], mat[:-1]).ravel()
+    order = sims.argsort()[::-1]
+    results: List[Dict[str, object]] = []
+    for idx in order[: max(1, top_k)]:
+        results.append({"label": labels[idx], "text": texts[idx], "score": float(sims[idx])})
+    return results
 
 def main():
     if len(sys.argv) < 2:
