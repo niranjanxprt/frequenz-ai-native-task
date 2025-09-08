@@ -57,3 +57,6 @@ temp/
 *.svg
 project_knowledge.dot
 project_knowledge.svg
+
+# Browser-saved page assets (e.g., "<page>_files/" folders)
+*_files/
