@@ -171,20 +171,49 @@ with col2:
     if not data:
         st.empty()
     else:
-        view = st.radio("View", ["Interactive", "Static"], index=0, horizontal=True)
+        view = st.selectbox(
+            "Graph view",
+            ["Interactive (PyVis)", "Static (Graphviz DOT)", "DOT source"],
+            index=0,
+        )
         nodes, edges = viz.build_nodes_edges(data)
-        if view == "Interactive":
+        dot = viz.to_dot(nodes, edges)
+        if view == "Interactive (PyVis)":
             try:
                 from streamlit.components.v1 import html as st_html
                 html = viz.to_pyvis_html(data, height="600px")
                 st_html(html, height=600)
+                st.download_button(
+                    label="Download interactive HTML",
+                    data=html,
+                    file_name="project_graph.html",
+                    mime="text/html",
+                )
             except Exception as e:
                 st.error(f"Interactive view unavailable: {e}. Falling back to static.")
-                dot = viz.to_dot(nodes, edges)
                 st.graphviz_chart(dot, use_container_width=True)
-        else:
-            dot = viz.to_dot(nodes, edges)
+                st.download_button(
+                    label="Download DOT",
+                    data=dot.encode("utf-8"),
+                    file_name="project_knowledge.dot",
+                    mime="text/vnd.graphviz",
+                )
+        elif view == "Static (Graphviz DOT)":
             st.graphviz_chart(dot, use_container_width=True)
+            st.download_button(
+                label="Download DOT",
+                data=dot.encode("utf-8"),
+                file_name="project_knowledge.dot",
+                mime="text/vnd.graphviz",
+            )
+        else:  # DOT source
+            st.code(dot, language="dot")
+            st.download_button(
+                label="Download DOT",
+                data=dot.encode("utf-8"),
+                file_name="project_knowledge.dot",
+                mime="text/vnd.graphviz",
+            )
         try:
             G = viz.build_nx_graph(data)
             m = viz.nx_basic_metrics(G)
@@ -211,8 +240,9 @@ else:
 
     default_q = sel or "How do I install the sdk?"
     qtext = st.text_input("Your question", value=default_q)
+    topk = st.slider("Results", min_value=1, max_value=5, value=3, help="Number of semantic matches to show")
     if st.button("Answer"):
-        results = q.retrieve_semantic(qtext, data, top_k=3)
+        results = q.retrieve_semantic(qtext, data, top_k=topk)
         if not results:
             st.error("No relevant content found.")
         else:
