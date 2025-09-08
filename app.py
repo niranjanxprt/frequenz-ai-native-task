@@ -116,12 +116,18 @@ with st.sidebar:
         import extract
 
         try:
+            # Normalize input: if user pasted a repo base ending in /main or /master, append /README.md
+            ru = repo_url.strip()
+            if ru.endswith("/main") or ru.endswith("/main/"):
+                ru = ru.rstrip("/") + "/README.md"
+            if ru.endswith("/master") or ru.endswith("/master/"):
+                ru = ru.rstrip("/") + "/README.md"
             # Basic validation for raw GitHub URL
-            if not repo_url.startswith("https://raw.githubusercontent.com/"):
+            if not ru.startswith("https://raw.githubusercontent.com/"):
                 raise ValueError(
                     "URL must start with https://raw.githubusercontent.com/ (check spelling)."
                 )
-            md = extract.fetch_readme(repo_url, branch)
+            md = extract.fetch_readme(ru, branch)
             soup = extract.md_to_soup(md)
             sections = extract.extract_sections(soup)
             name = "Frequenz SDK for Python"
