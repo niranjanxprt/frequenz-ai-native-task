@@ -241,8 +241,20 @@ else:
     default_q = sel or "How do I install the sdk?"
     qtext = st.text_input("Your question", value=default_q)
     topk = st.slider("Results", min_value=1, max_value=5, value=3, help="Number of semantic matches to show")
+
+    @st.cache_resource(show_spinner=False)
+    def _get_retriever(payload_json: str):
+        # Cache per distinct payload
+        payload = json.loads(payload_json)
+        return q.TfidfRetriever.from_data(payload)
+
     if st.button("Answer"):
-        results = q.retrieve_semantic(qtext, data, top_k=topk)
+        try:
+            retriever = _get_retriever(json.dumps(data, sort_keys=True))
+            results = retriever.search(qtext, top_k=topk)
+        except Exception:
+            # Fallback to stateless API
+            results = q.retrieve_semantic(qtext, data, top_k=topk)
         if not results:
             st.error("No relevant content found.")
         else:

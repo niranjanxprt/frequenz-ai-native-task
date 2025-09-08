@@ -10,6 +10,8 @@ import json
 import re
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict
+from dataclasses import dataclass
+from functools import lru_cache
 
 def load_knowledge(path="project_knowledge.jsonld"):
     return json.loads(Path(path).read_text(encoding="utf-8"))
@@ -170,6 +172,48 @@ def retrieve_semantic(question: str, data, top_k: int = 3) -> List[Dict[str, obj
     for idx in order[: max(1, top_k)]:
         results.append({"label": labels[idx], "text": texts[idx], "score": float(sims[idx])})
     return results
+
+
+# ---- Reusable Retriever ----------------------------------------------------
+
+@dataclass
+class TfidfRetriever:
+    """Reusable TF-IDF retriever for semantic matching over JSON-LD fields.
+
+    Fit once per knowledge payload; then call search() many times.
+    """
+
+    labels: List[str]
+    texts: List[str]
+    _vec: object
+    _mat: object
+
+    @classmethod
+    def from_data(cls, data: dict):
+        docs = _build_docs(data)
+        if not docs:
+            raise ValueError("No documents to index.")
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+        except Exception as e:  # pragma: no cover
+            raise ImportError("scikit-learn is required for semantic retrieval") from e
+        texts = [t for _, t in docs]
+        labels = [l for l, _ in docs]
+        vec = TfidfVectorizer(stop_words="english")
+        mat = vec.fit_transform(texts)
+        return cls(labels=labels, texts=texts, _vec=vec, _mat=mat)
+
+    def search(self, question: str, top_k: int = 3) -> List[Dict[str, object]]:
+        from sklearn.metrics.pairwise import cosine_similarity
+        qv = self._vec.transform([question])
+        sims = cosine_similarity(qv, self._mat).ravel()
+        order = sims.argsort()[::-1]
+        results: List[Dict[str, object]] = []
+        for idx in order[: max(1, top_k)]:
+            results.append(
+                {"label": self.labels[idx], "text": self.texts[idx], "score": float(sims[idx])}
+            )
+        return results
 
 def main():
     if len(sys.argv) < 2:
