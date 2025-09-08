@@ -101,8 +101,6 @@ with st.sidebar:
 
     st.header("Data Source")
     default_path = "project_knowledge.jsonld"
-    path = st.text_input("JSON‑LD path", value=default_path)
-    uploaded = st.file_uploader("…or upload JSON‑LD", type=["json", "jsonld"])  # optional override
 
     st.markdown("---")
     st.subheader("Extract JSON‑LD")
@@ -114,7 +112,7 @@ with st.sidebar:
             "or a GitHub web URL with /blob/ (it will be converted automatically)."
         ),
     )
-    if st.button("Extract from README.md"):
+    if st.button("Extract"):
         import extract
 
         try:
@@ -140,45 +138,18 @@ with st.sidebar:
                 ["3.11", "3.12"],
             )
             Path(default_path).write_text(json.dumps(jsonld, indent=2), encoding="utf-8")
-            st.success(f"Wrote {default_path}")
+            st.session_state["data"] = jsonld
+            st.success("Knowledge graph generated from README.")
         except Exception as e:
             st.error(f"Extraction failed: {e}")
             st.info("Tip: Use the offline method below by uploading a README.md file.")
 
-    # Offline/local README extraction
-    readme_up = st.file_uploader("Upload README.md for offline extraction", type=["md", "markdown"], key="readme_up")
-    if st.button("Extract from uploaded README.md"):
-        if readme_up is None:
-            st.warning("Please upload a README.md file first.")
-        else:
-            import extract
-            try:
-                md = readme_up.read().decode("utf-8")
-                soup = extract.md_to_soup(md)
-                sections = extract.extract_sections(soup)
-                name = "Frequenz SDK for Python"
-                desc = extract.first_paragraph(soup) or ""
-                installs = extract.find_install_instructions(soup) or ["pip install frequenz-sdk"]
-                features = extract.guess_features(sections)
-                examples = extract.collect_code_examples(soup)
-                jsonld = extract.build_jsonld(
-                    name,
-                    desc,
-                    installs,
-                    features,
-                    examples,
-                    "https://opensource.org/licenses/MIT",
-                    ["3.11", "3.12"],
-                )
-                Path(default_path).write_text(json.dumps(jsonld, indent=2), encoding="utf-8")
-                st.success(f"Wrote {default_path} from uploaded README")
-            except Exception as e:
-                st.error(f"Local extraction failed: {e}")
+    # Removed offline README and JSON-LD upload to enforce a single-link workflow
 
     # Branding URL removed by request; local upload still supported above
 
 
-data = load_jsonld(path, uploaded.getvalue() if uploaded else None)
+data = st.session_state.get("data") or load_jsonld(default_path, None)
 
 col1, col2 = st.columns([2, 3])
 
