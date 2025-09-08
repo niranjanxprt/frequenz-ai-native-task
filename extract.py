@@ -6,11 +6,10 @@ Extracts key information from the Frequenz SDK for Python README and generates a
 named `project_knowledge.jsonld`.
 
 Usage:
-    python extract.py [--repo-url URL] [--branch BRANCH] [--out OUTPATH]
+    python extract.py [--repo-url URL] [--out OUTPATH]
 
 Defaults:
     --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python
-    --branch   main
     --out      ./project_knowledge.jsonld
 """
 import argparse
@@ -26,15 +25,15 @@ from typing import Optional, List
 RAW_DEFAULT = "https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python"
 DEFAULT_BRANCH = "main"
 
-def fetch_readme(repo_url: str, branch: str) -> str:
+def fetch_readme(repo_url: str) -> str:
     """Fetch README text from a raw GitHub URL.
 
     Accepts either:
     - a full raw README URL (e.g., https://raw.githubusercontent.com/.../main/README.md), or
-    - a repo raw base URL (e.g., https://raw.githubusercontent.com/org/repo), plus ``branch``.
+    - a repo raw base URL (e.g., https://raw.githubusercontent.com/org/repo).
 
-    Tries several common filename variants and adds headers to reduce 403/429s.
-    Raises a RuntimeError with guidance to use --local-readme if all attempts fail.
+    If a repo base is given, tries common branches (main, master) and README name variants.
+    Adds headers to reduce 403/429. Raises RuntimeError with guidance for --local-readme.
     """
     session = requests.Session()
     session.headers.update(
@@ -44,24 +43,17 @@ def fetch_readme(repo_url: str, branch: str) -> str:
         }
     )
     # If a full README path was provided, try it directly first
-    direct = []
-    lower = repo_url.lower()
+    lower = repo_url.lower().strip()
     if lower.endswith((".md", ".rst", ".txt")) or "/readme" in lower:
-        direct.append(repo_url)
-        # If the URL hardcodes /main/ but a different branch was selected, try swapping it in
-        if "/main/" in repo_url and branch and branch != "main":
-            direct.append(repo_url.replace("/main/", f"/{branch}/"))
-
-    for url in direct:
         try:
-            r = session.get(url, timeout=20)
+            r = session.get(repo_url, timeout=20)
             if r.status_code == 200 and len(r.text) > 120:
                 return r.text
         except Exception:
             pass
 
-    # Otherwise, construct candidates from base + branch + common names
-    candidates = [
+    # Otherwise, treat as repo base and construct candidates from common branches
+    readme_names = [
         "README.md",
         "README.MD",
         "Readme.md",
@@ -70,20 +62,22 @@ def fetch_readme(repo_url: str, branch: str) -> str:
         "docs/README.md",
         "README",
     ]
-    errors = []
-    for fname in candidates:
-        url = f"{repo_url}/{branch}/{fname}"
-        try:
-            r = session.get(url, timeout=20)
-            if r.status_code == 200 and len(r.text) > 120:
-                return r.text
-            errors.append(f"{url} -> {r.status_code}")
-        except Exception as e:
-            errors.append(f"{url} -> {e}")
+    branches = ["main", "master"]
+    tried = []
+    for br in branches:
+        for fname in readme_names:
+            url = f"{repo_url.rstrip('/')}/{br}/{fname}"
+            try:
+                r = session.get(url, timeout=20)
+                if r.status_code == 200 and len(r.text) > 120:
+                    return r.text
+                tried.append(f"{url} -> {r.status_code}")
+            except Exception as e:
+                tried.append(f"{url} -> {e}")
     raise RuntimeError(
-        "Could not fetch README from "
-        f"{repo_url}/{branch}. Tried: " + ", ".join(candidates) + ". "
-        "Tip: run with --local-readme path/to/README.md to parse a local file."
+        "Could not fetch README. Tried:\n- "
+        + "\n- ".join(tried)
+        + "\nTip: run with --local-readme path/to/README.md to parse a local file."
     )
 
 def md_to_soup(md_text: str) -> BeautifulSoup:
@@ -251,7 +245,7 @@ def build_jsonld(
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-url", default=RAW_DEFAULT)
-    ap.add_argument("--branch", default="main")
+    # Branch selection removed; we try common branches automatically
     ap.add_argument("--out", default="project_knowledge.jsonld")
     ap.add_argument("--license-url", default="https://opensource.org/licenses/MIT")
     ap.add_argument("--python-versions", default="3.11,3.12", help="Comma-separated (e.g., 3.11,3.12)")
@@ -261,7 +255,7 @@ def main():
     if args.local_readme:
         md = Path(args.local_readme).read_text(encoding="utf-8")
     else:
-        md = fetch_readme(args.repo_url, args.branch)
+        md = fetch_readme(args.repo_url)
     soup = md_to_soup(md)
     sections = extract_sections(soup)
 

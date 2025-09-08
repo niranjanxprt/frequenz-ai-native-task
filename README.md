@@ -13,7 +13,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Generate JSON-LD from upstream README (defaults shown)
-python extract.py --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python --branch main
+python extract.py --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python
 
 # Ask questions
 python query.py "What is the Frequenz SDK for?"
@@ -25,7 +25,7 @@ python query.py "Show me an example of how to use it."
 - Install: `pipx install poetry` (or follow Poetry docs)
 - Setup env and deps: `poetry install`
 - Run tools via Poetry:
-  - `poetry run extract --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python --branch main`
+  - `poetry run extract --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python`
   - `poetry run query "How do I install the sdk?"`
   - `poetry run visualize --format dot --out project_knowledge.dot`
 
