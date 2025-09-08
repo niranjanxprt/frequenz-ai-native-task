@@ -13,6 +13,7 @@ or run: python extract.py --repo-url https://raw.githubusercontent.com/frequenz-
 from pathlib import Path
 import json
 from typing import Optional
+import glob
 import streamlit as st
 
 import query as q
@@ -33,6 +34,19 @@ st.title("Frequenz SDK — AI‑Native Knowledge Graph")
 st.caption("Visualize the JSON‑LD and ask questions about the SDK")
 
 with st.sidebar:
+    # Branding: show Frequenz logo if available or allow upload
+    logo_candidates = []
+    for ext in ("png", "jpg", "jpeg"):
+        logo_candidates.extend(glob.glob(f"assets/*logo*.{ext}"))
+        logo_candidates.extend(glob.glob(f"assets/*frequenz*.{ext}"))
+    logo_path = logo_candidates[0] if logo_candidates else None
+    if logo_path:
+        st.image(logo_path, caption=None, width=180)
+    else:
+        up = st.file_uploader("Upload Frequenz logo (PNG/JPG)", type=["png", "jpg", "jpeg"], key="logo_up")
+        if up is not None:
+            st.image(up, caption=None, width=180)
+
     st.header("Data Source")
     default_path = "project_knowledge.jsonld"
     path = st.text_input("JSON‑LD path", value=default_path)

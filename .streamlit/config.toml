@@ -5,3 +5,11 @@ headless = true
 enableCORS = false
 enableXsrfProtection = true
 
+[theme]
+# Update these to match official Frequenz brand palette
+# Reference: https://www.frequenz.com/
+primaryColor = "#00AEEF"           # Brand primary (placeholder)
+backgroundColor = "#FFFFFF"         # App background
+secondaryBackgroundColor = "#F6F8FA" # Sidebar / panel background
+textColor = "#0B1221"               # Primary text
+font = "sans serif"
