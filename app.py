@@ -105,35 +105,6 @@ with st.sidebar:
     uploaded = st.file_uploader("…or upload JSON‑LD", type=["json", "jsonld"])  # optional override
 
     st.markdown("---")
-    st.subheader("Appearance")
-    theme_choice = st.radio("Theme", ["Dark", "Light"], index=0, horizontal=True)
-    if theme_choice == "Dark":
-        bg, panel, text, accent = "#2D1726", "#556372", "#E6EAEB", "#62B5B1"
-    else:
-        bg, panel, text, accent = "#FFFFFF", "#F6F8FA", "#0B1221", "#62B5B1"
-
-    # Apply runtime theme overrides (keeps Graphviz neutral)
-    st.markdown(
-        f"""
-        <style>
-        :root {{ --accent: {accent}; --bg: {bg}; --panel: {panel}; --text: {text}; }}
-        html, body, .stApp {{ background: var(--bg) !important; color: var(--text) !important; }}
-        [data-testid="stSidebar"] {{ background: var(--panel) !important; }}
-        h1, h2, h3 {{ color: var(--accent) !important; }}
-        a, a:visited {{ color: var(--accent) !important; }}
-        .stButton>button {{ border: 1px solid var(--accent) !important; background: var(--accent) !important; color: #0B1B1F !important; }}
-        [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {{ border-color: var(--accent) !important; }}
-        [data-baseweb="select"] > div {{ border-color: var(--accent) !important; }}
-        [data-baseweb="file-uploader"] {{ border: 1px dashed var(--accent) !important; }}
-        .stAlert > div {{ border-left: 4px solid var(--accent); }}
-        pre code {{ border-left: 3px solid var(--accent); padding-left: 8px; display: block; }}
-        ul li::marker {{ color: var(--accent); }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
     st.subheader("Extract JSON‑LD")
     repo_url = st.text_input(
         "Repo raw base URL",
