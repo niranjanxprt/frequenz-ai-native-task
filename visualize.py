@@ -19,6 +19,16 @@ import json
 import shlex
 import subprocess
 from pathlib import Path
+from typing import Dict, Optional
+
+try:
+    import tomllib  # py311+
+except Exception:  # pragma: no cover
+    tomllib = None
+try:
+    import toml  # fallback
+except Exception:  # pragma: no cover
+    toml = None
 
 
 def esc(s: str) -> str:
@@ -110,7 +120,27 @@ def build_nodes_edges(data: dict):
     return nodes, edges
 
 
-def to_dot(nodes, edges) -> str:
+def read_streamlit_theme(config_path: str = ".streamlit/config.toml") -> Dict[str, str]:
+    path = Path(config_path)
+    if not path.exists():
+        return {}
+    try:
+        data = (
+            tomllib.loads(path.read_text(encoding="utf-8")) if tomllib else toml.load(path)
+        )
+        return data.get("theme", {}) if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def to_dot(nodes, edges, theme: Optional[Dict[str, str]] = None) -> str:
+    if theme is None:
+        theme = read_streamlit_theme()
+    # Colors with sensible defaults
+    bg = theme.get("backgroundColor", "#FFFFFF")
+    panel = theme.get("secondaryBackgroundColor", "#F6F8FA")
+    primary = theme.get("primaryColor", "#62B5B1")
+    text = theme.get("textColor", "#111111")
     def attrs_to_str(attrs: dict) -> str:
         if not attrs:
             return ""
@@ -120,7 +150,9 @@ def to_dot(nodes, edges) -> str:
     lines = [
         "digraph G {",
         "  rankdir=LR;",
-        "  node [shape=box, style=rounded, fontsize=10];",
+        f"  bgcolor=\"{esc(bg)}\";",
+        f"  node [shape=box, style=\"rounded,filled\", fontsize=10, color=\"{esc(primary)}\", fillcolor=\"{esc(panel)}\", fontcolor=\"{esc(text)}\"];",
+        f"  edge [color=\"{esc(primary)}\"];",
     ]
     for nid, label, attrs in nodes:
         lines.append(f"  {nid} [label=\"{esc(label)}\"]{attrs_to_str(attrs)};")

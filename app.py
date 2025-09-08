@@ -16,7 +16,6 @@ from typing import Optional
 import glob
 import streamlit as st
 import requests
-import branding
 
 import query as q
 import visualize as viz
@@ -32,12 +31,34 @@ def load_jsonld(path: Optional[str], uploaded_bytes: Optional[bytes]):
 
 
 st.set_page_config(page_title="Frequenz SDK — AI‑Native Graph", layout="wide")
-branding.inject_branding()
-branding.hero(
-    "Frequenz SDK — AI‑Native Knowledge Graph",
-    "Branded accents; runs on localhost only",
-)
+st.title("Frequenz SDK — AI‑Native Knowledge Graph")
 st.caption("Visualize the JSON‑LD and ask questions about the SDK")
+
+# Accent styling for non-graph sections (keeps Graphviz neutral)
+ACCENT = "#62B5B1"
+st.markdown(
+    f"""
+    <style>
+    :root {{ --accent: {ACCENT}; }}
+    h1, h2, h3 {{ color: var(--accent) !important; }}
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {{
+        color: var(--accent) !important;
+    }}
+    .stButton>button {{
+        border: 1px solid var(--accent) !important;
+        background: var(--accent) !important;
+        color: #0B1B1F !important;
+    }}
+    [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {{
+        border-color: var(--accent) !important;
+    }}
+    [data-baseweb="file-uploader"] {{
+        border: 1px dashed var(--accent) !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 with st.sidebar:
     # Branding: show Frequenz logo if available or allow upload
@@ -78,6 +99,11 @@ with st.sidebar:
         import extract
 
         try:
+            # Basic validation for raw GitHub base URL
+            if not repo_url.startswith("https://raw.githubusercontent.com/"):
+                raise ValueError(
+                    "Repo raw base URL must start with https://raw.githubusercontent.com/ (check spelling)."
+                )
             md = extract.fetch_readme(repo_url, branch)
             soup = extract.md_to_soup(md)
             sections = extract.extract_sections(soup)
