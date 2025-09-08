@@ -183,29 +183,54 @@ with col2:
                 from streamlit.components.v1 import html as st_html
                 html = viz.to_pyvis_html(data, height="650px", accent="#62B5B1", dark=True)
                 st_html(html, height=600)
-                st.download_button(
-                    label="Download interactive HTML",
-                    data=html,
-                    file_name="project_graph.html",
-                    mime="text/html",
-                )
+                st.download_button(label="Download interactive HTML", data=html, file_name="project_graph.html", mime="text/html")
             except Exception as e:
                 st.error(f"Interactive view unavailable: {e}. Falling back to static.")
                 st.graphviz_chart(dot, use_container_width=True)
-                st.download_button(
-                    label="Download DOT",
-                    data=dot.encode("utf-8"),
-                    file_name="project_knowledge.dot",
-                    mime="text/vnd.graphviz",
-                )
+                # Offer SVG download if Graphviz 'dot' is available
+                def _dot_to_svg_bytes(s: str):
+                    try:
+                        import tempfile
+                        from pathlib import Path as _P
+                        with tempfile.TemporaryDirectory() as td:
+                            d = _P(td)
+                            dp = d / "graph.dot"
+                            sp = d / "graph.svg"
+                            dp.write_text(s, encoding="utf-8")
+                            ok = viz.dot_to_svg(dp, sp)
+                            if ok and sp.exists():
+                                return sp.read_bytes()
+                    except Exception:
+                        return None
+                    return None
+                svg_bytes = _dot_to_svg_bytes(dot)
+                if svg_bytes:
+                    st.download_button(label="Download SVG", data=svg_bytes, file_name="project_knowledge.svg", mime="image/svg+xml")
+                else:
+                    st.info("SVG export requires Graphviz 'dot' installed.")
         elif view == "Static (Graphviz DOT)":
             st.graphviz_chart(dot, use_container_width=True)
-            st.download_button(
-                label="Download DOT",
-                data=dot.encode("utf-8"),
-                file_name="project_knowledge.dot",
-                mime="text/vnd.graphviz",
-            )
+            # Offer SVG download if Graphviz 'dot' is available
+            def _dot_to_svg_bytes2(s: str):
+                try:
+                    import tempfile
+                    from pathlib import Path as _P
+                    with tempfile.TemporaryDirectory() as td:
+                        d = _P(td)
+                        dp = d / "graph.dot"
+                        sp = d / "graph.svg"
+                        dp.write_text(s, encoding="utf-8")
+                        ok = viz.dot_to_svg(dp, sp)
+                        if ok and sp.exists():
+                            return sp.read_bytes()
+                except Exception:
+                    return None
+                return None
+            svg_bytes2 = _dot_to_svg_bytes2(dot)
+            if svg_bytes2:
+                st.download_button(label="Download SVG", data=svg_bytes2, file_name="project_knowledge.svg", mime="image/svg+xml")
+            else:
+                st.info("SVG export requires Graphviz 'dot' installed.")
         try:
             G = viz.build_nx_graph(data)
             m = viz.nx_basic_metrics(G)
