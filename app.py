@@ -173,7 +173,7 @@ with col2:
     else:
         view = st.selectbox(
             "Graph view",
-            ["Interactive (PyVis)", "Static (Graphviz DOT)", "DOT source"],
+            ["Interactive (PyVis)", "Static (Graphviz DOT)"],
             index=0,
         )
         nodes, edges = viz.build_nodes_edges(data)
@@ -200,14 +200,6 @@ with col2:
                 )
         elif view == "Static (Graphviz DOT)":
             st.graphviz_chart(dot, use_container_width=True)
-            st.download_button(
-                label="Download DOT",
-                data=dot.encode("utf-8"),
-                file_name="project_knowledge.dot",
-                mime="text/vnd.graphviz",
-            )
-        else:  # DOT source
-            st.code(dot, language="dot")
             st.download_button(
                 label="Download DOT",
                 data=dot.encode("utf-8"),
