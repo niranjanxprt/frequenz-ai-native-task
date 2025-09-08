@@ -238,7 +238,11 @@ def to_pyvis_html(
     G = build_nx_graph(data)
     colors = _palette(accent=accent, dark=dark)
     net = Network(height=height, width=width, directed=True, notebook=False, bgcolor=colors["_meta"]["bg"], font_color=colors["_meta"]["text"])
-    net.barnes_hut(gravity=-2500, central_gravity=0.3, spring_length=150, spring_strength=0.05, damping=0.09)
+    # Use strong repulsion with larger node distance to reduce overlap
+    try:
+        net.repulsion(node_distance=240, central_gravity=0.15, spring_length=200, spring_strength=0.03, damping=0.09)
+    except Exception:
+        pass
     # Provide UI buttons to tweak physics/interaction
     try:
         net.show_buttons(filter_=["physics", "interaction", "layout"])
@@ -266,11 +270,27 @@ def to_pyvis_html(
             title=f"{group}: {label}",
             shape=shape_map.get(shape, "dot"),
             color=color,
+            widthConstraint={"maximum": 280},
         )
     # Add edges
     for u, v, attrs in G.edges(data=True):
         label = attrs.get("label", "")
         net.add_edge(u, v, label=label, color=colors["edge"], arrows="to", physics=True, smooth={"type": "dynamic"})
+
+    # Extra safety: enforce options to reduce overlaps and stabilize
+    net.set_options("""
+    {
+      "layout": {"improvedLayout": true},
+      "physics": {
+        "enabled": true,
+        "solver": "repulsion",
+        "repulsion": {"nodeDistance": 240, "springLength": 200, "springConstant": 0.03},
+        "stabilization": {"enabled": true, "iterations": 1200, "updateInterval": 25, "fit": true},
+        "minVelocity": 0.5
+      },
+      "interaction": {"hover": true, "multiselect": true, "dragNodes": true}
+    }
+    """)
     # Generate HTML string
     html = net.generate_html()
     # Simple legend appended below the graph
