@@ -152,7 +152,83 @@ def nx_basic_metrics(G) -> Dict[str, object]:
     return metrics
 
 
-def to_pyvis_html(data: dict, height: str = "600px", width: str = "100%") -> str:
+def _palette(accent: str = "#62B5B1", dark: bool = True) -> Dict[str, Dict[str, str]]:
+    """Return a color palette per node group with border/background/highlight.
+
+    Designed for dark backgrounds by default.
+    """
+    # Core brand-inspired colors
+    teal = accent  # main accent
+    purple = "#8B2D6F"
+    blue = "#5C7AEA"
+    amber = "#E2B714"
+    coral = "#FF7F6E"
+    lime = "#A3E635"
+    cyan = "#22D3EE"
+    gray = "#9CA3AF"
+    bg_dark = "#2D1726" if dark else "#FFFFFF"
+    text = "#E6EAEB" if dark else "#0B1221"
+
+    def c(border, background):
+        return {
+            "border": border,
+            "background": background,
+            "highlight": {"border": border, "background": background},
+        }
+
+    return {
+        "_meta": {"bg": bg_dark, "text": text},
+        "root": c(teal, "#143A3A" if dark else "#D1FAE5"),
+        "meta": c(blue, "#0F1A3A" if dark else "#DBEAFE"),
+        "repo": c(teal, "#0E2A2A" if dark else "#D1FAE5"),
+        "license": c(amber, "#3A2A0F" if dark else "#FEF3C7"),
+        "author": c(purple, "#2A0F1E" if dark else "#FCE7F3"),
+        "requirement": c(cyan, "#082F35" if dark else "#CFFAFE"),
+        "feature": c(lime, "#12290A" if dark else "#ECFCCB"),
+        "install": c(coral, "#3A1712" if dark else "#FFE4E6"),
+        "install_step": c(coral, "#3A1712" if dark else "#FFE4E6"),
+        "example": c(blue, "#0F1A3A" if dark else "#DBEAFE"),
+        "question": c(gray, "#1F2937" if dark else "#F3F4F6"),
+        "answer": c(gray, "#111827" if dark else "#F3F4F6"),
+        "edge": teal,
+    }
+
+
+def _node_group(nid: str) -> str:
+    if nid == "root":
+        return "root"
+    if nid in {"applicationCategory", "programmingLanguage"}:
+        return "meta"
+    if nid == "codeRepository":
+        return "repo"
+    if nid == "license":
+        return "license"
+    if nid == "author":
+        return "author"
+    if nid.startswith("req_"):
+        return "requirement"
+    if nid.startswith("feat_"):
+        return "feature"
+    if nid == "install":
+        return "install"
+    if nid.startswith("step_"):
+        return "install_step"
+    if nid.startswith("example_"):
+        return "example"
+    if nid.startswith("q_"):
+        return "question"
+    if nid.startswith("a_"):
+        return "answer"
+    return "meta"
+
+
+def to_pyvis_html(
+    data: dict,
+    height: str = "600px",
+    width: str = "100%",
+    accent: str = "#62B5B1",
+    dark: bool = True,
+) -> str:
     """Return an interactive HTML (PyVis/vis.js) for the graph.
 
     Requires pyvis. Raises ImportError if missing.
@@ -160,8 +236,14 @@ def to_pyvis_html(data: dict, height: str = "600px", width: str = "100%") -> str
     if Network is None:
         raise ImportError("pyvis is not installed")
     G = build_nx_graph(data)
-    net = Network(height=height, width=width, directed=True, notebook=False)
-    net.barnes_hut()
+    colors = _palette(accent=accent, dark=dark)
+    net = Network(height=height, width=width, directed=True, notebook=False, bgcolor=colors["_meta"]["bg"], font_color=colors["_meta"]["text"])
+    net.barnes_hut(gravity=-2500, central_gravity=0.3, spring_length=150, spring_strength=0.05, damping=0.09)
+    # Provide UI buttons to tweak physics/interaction
+    try:
+        net.show_buttons(filter_=["physics", "interaction", "layout"])
+    except Exception:
+        pass
     # Add nodes
     for nid, attrs in G.nodes(data=True):
         label = attrs.get("label", nid)
@@ -176,13 +258,28 @@ def to_pyvis_html(data: dict, height: str = "600px", width: str = "100%") -> str
             "box": "box",
             "oval": "ellipse",
         }
-        net.add_node(nid, label=label, title=label, shape=shape_map.get(shape, "dot"))
+        group = _node_group(nid)
+        color = colors.get(group, {"border": accent, "background": "#111827"})
+        net.add_node(
+            nid,
+            label=label,
+            title=f"{group}: {label}",
+            shape=shape_map.get(shape, "dot"),
+            color=color,
+        )
     # Add edges
     for u, v, attrs in G.edges(data=True):
         label = attrs.get("label", "")
-        net.add_edge(u, v, label=label, arrows="to", physics=True, smooth=True)
+        net.add_edge(u, v, label=label, color=colors["edge"], arrows="to", physics=True, smooth={"type": "dynamic"})
     # Generate HTML string
-    return net.generate_html()
+    html = net.generate_html()
+    # Simple legend appended below the graph
+    legend = """
+    <div style='font-family: system-ui, -apple-system, Segoe UI, Roboto; font-size: 12px; margin-top: 8px;'>
+      <strong>Legend</strong> — Root (teal), Meta/Repo/License/Author, Requirements (cyan), Features (lime), Install (coral), Example (blue), Q/A (gray)
+    </div>
+    """
+    return html.replace("</body>", legend + "</body>")
 
 
 def read_streamlit_theme(config_path: str = ".streamlit/config.toml") -> Dict[str, str]:
