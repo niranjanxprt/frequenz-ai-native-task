@@ -15,6 +15,7 @@ import json
 from typing import Optional
 import glob
 import streamlit as st
+import requests
 
 import query as q
 import visualize as viz
@@ -85,6 +86,50 @@ with st.sidebar:
             st.success(f"Wrote {default_path}")
         except Exception as e:
             st.error(f"Extraction failed: {e}")
+
+    # Offline/local README extraction
+    readme_up = st.file_uploader("Upload README.md for offline extraction", type=["md", "markdown"], key="readme_up")
+    if st.button("Extract from uploaded README.md"):
+        if readme_up is None:
+            st.warning("Please upload a README.md file first.")
+        else:
+            import extract
+            try:
+                md = readme_up.read().decode("utf-8")
+                soup = extract.md_to_soup(md)
+                sections = extract.extract_sections(soup)
+                name = "Frequenz SDK for Python"
+                desc = extract.first_paragraph(soup) or ""
+                installs = extract.find_install_instructions(soup) or ["pip install frequenz-sdk"]
+                features = extract.guess_features(sections)
+                examples = extract.collect_code_examples(soup)
+                jsonld = extract.build_jsonld(
+                    name,
+                    desc,
+                    installs,
+                    features,
+                    examples,
+                    "https://opensource.org/licenses/MIT",
+                    ["3.11", "3.12"],
+                )
+                Path(default_path).write_text(json.dumps(jsonld, indent=2), encoding="utf-8")
+                st.success(f"Wrote {default_path} from uploaded README")
+            except Exception as e:
+                st.error(f"Local extraction failed: {e}")
+
+    st.markdown("---")
+    st.subheader("Branding")
+    logo_url = st.text_input("Logo URL (optional)", value="")
+    if st.button("Download logo to assets/") and logo_url:
+        try:
+            r = requests.get(logo_url, timeout=15)
+            r.raise_for_status()
+            assets_dir = Path("assets"); assets_dir.mkdir(parents=True, exist_ok=True)
+            out = assets_dir / "frequenz-logo.png"
+            out.write_bytes(r.content)
+            st.success(f"Saved logo to {out}")
+        except Exception as e:
+            st.error(f"Logo download failed: {e}")
 
 
 data = load_jsonld(path, uploaded.getvalue() if uploaded else None)
