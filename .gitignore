@@ -1,0 +1,58 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# Packaging and build
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.whl
+
+# Tests and tooling caches
+.pytest_cache/
+.tox/
+.cache/
+coverage.xml
+.coverage*
+htmlcov/
+
+# Editors/IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+tmp/
+temp/
+.scratch/
+.env
+.env.*
+
+# Streamlit runtime artifacts
+.streamlit/
+.streamlit.*.pid
+.streamlit.*.log
+
+# Generated visualization artifacts
+*.dot
+*.svg
+project_knowledge.dot
+project_knowledge.svg
+

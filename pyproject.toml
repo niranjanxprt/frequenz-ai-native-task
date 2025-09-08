@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "frequenz-ai-native-task"
+version = "0.1.0"
+description = "AI-Native knowledge graph demo: extract JSON-LD from README, query it, and visualize."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+requests = ">=2.31.0"
+beautifulsoup4 = ">=4.12.2"
+markdown-it-py = ">=3.0.0"
+streamlit = ">=1.33.0"
+graphviz = ">=0.20.1"
+
+[tool.poetry.group.dev.dependencies]
+# Using stdlib unittest for tests to avoid extra deps
+
+[tool.poetry.scripts]
+extract = "extract:main"
+query = "query:main"
+visualize = "visualize:main"
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"
