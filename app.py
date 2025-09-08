@@ -107,27 +107,22 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("Extract JSON‑LD")
     repo_url = st.text_input(
-        "Raw README URL (or repo base)",
-        value="https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python/main/README.md",
-        help="Paste a full raw README URL, or a repo base like https://raw.githubusercontent.com/org/repo",
+        "Raw README URL (or GitHub /blob/ URL)",
+        value="https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md",
+        help=(
+            "Paste a full raw README URL (https://raw.githubusercontent.com/owner/repo/ref/README.md) "
+            "or a GitHub web URL with /blob/ (it will be converted automatically)."
+        ),
     )
-    branch = st.text_input("Branch", value="main")
     if st.button("Extract from README.md"):
         import extract
 
         try:
-            # Normalize input: if user pasted a repo base ending in /main or /master, append /README.md
             ru = repo_url.strip()
-            if ru.endswith("/main") or ru.endswith("/main/"):
-                ru = ru.rstrip("/") + "/README.md"
-            if ru.endswith("/master") or ru.endswith("/master/"):
-                ru = ru.rstrip("/") + "/README.md"
-            # Basic validation for raw GitHub URL
-            if not ru.startswith("https://raw.githubusercontent.com/"):
-                raise ValueError(
-                    "URL must start with https://raw.githubusercontent.com/ (check spelling)."
-                )
-            md = extract.fetch_readme(ru, branch)
+            # Accept both github.com (with /blob/) and raw.githubusercontent.com
+            if not (ru.startswith("https://raw.githubusercontent.com/") or ru.startswith("https://github.com/")):
+                raise ValueError("URL must be a GitHub raw or web URL starting with https://raw.githubusercontent.com/ or https://github.com/.")
+            md = extract.fetch_readme(ru)
             soup = extract.md_to_soup(md)
             sections = extract.extract_sections(soup)
             name = "Frequenz SDK for Python"

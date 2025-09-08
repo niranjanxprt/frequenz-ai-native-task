@@ -15,6 +15,9 @@ pip install -r requirements.txt
 # Generate JSON-LD from upstream README (defaults shown)
 python extract.py --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python
 
+# Use a GitHub web URL (with /blob/); extractor converts to raw automatically
+python extract.py --repo-url https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md
+
 # Ask questions
 python query.py "What is the Frequenz SDK for?"
 python query.py "How do I install the sdk?"
@@ -26,6 +29,7 @@ python query.py "Show me an example of how to use it."
 - Setup env and deps: `poetry install`
 - Run tools via Poetry:
   - `poetry run extract --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python`
+  - `poetry run extract --repo-url https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md`
   - `poetry run query "How do I install the sdk?"`
   - `poetry run visualize --format dot --out project_knowledge.dot`
 

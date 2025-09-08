@@ -22,10 +22,35 @@ from markdown_it import MarkdownIt
 from bs4 import BeautifulSoup
 from typing import Optional, List
 
-RAW_DEFAULT = "https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python"
+RAW_DEFAULT = "https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md"
 DEFAULT_BRANCH = "main"
 
-def fetch_readme(repo_url: str) -> str:
+def _to_raw_from_github_web(url: str) -> Optional[str]:
+    """Convert a GitHub web URL with /blob/ to a raw URL.
+
+    Example:
+      https://github.com/org/repo/blob/v1.x.x/README.md
+      -> https://raw.githubusercontent.com/org/repo/v1.x.x/README.md
+    """
+    if not url.startswith("https://github.com/"):
+        return None
+    try:
+        parts = url.split("github.com/")[1].split("/")
+        # Expect: owner/repo/blob/ref/path...
+        if len(parts) >= 4 and parts[2] == "blob":
+            owner, repo, _, ref = parts[:4]
+            path = "/".join(parts[4:])
+            return f"https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}"
+        # Some URLs may be /raw/
+        if len(parts) >= 4 and parts[2] == "raw":
+            owner, repo, _, ref = parts[:4]
+            path = "/".join(parts[4:])
+            return f"https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}"
+    except Exception:
+        return None
+    return None
+
+def fetch_readme(repo_url: str, ref: Optional[str] = None) -> str:
     """Fetch README text from a raw GitHub URL.
 
     Accepts either:
@@ -42,9 +67,16 @@ def fetch_readme(repo_url: str) -> str:
             "Accept": "text/plain, text/markdown, */*",
         }
     )
-    # If a full README path was provided, try it directly first
+    # Normalize GitHub web URLs (with /blob/ or /raw/) to raw URLs
+    norm = _to_raw_from_github_web(repo_url.strip())
+    if norm:
+        repo_url = norm
+
+    # If a full README path (raw) was provided, try it directly first
     lower = repo_url.lower().strip()
-    if lower.endswith((".md", ".rst", ".txt")) or "/readme" in lower:
+    if lower.startswith("https://raw.githubusercontent.com/") and (
+        lower.endswith((".md", ".rst", ".txt")) or "/readme" in lower
+    ):
         try:
             r = session.get(repo_url, timeout=20)
             if r.status_code == 200 and len(r.text) > 120:
@@ -62,7 +94,7 @@ def fetch_readme(repo_url: str) -> str:
         "docs/README.md",
         "README",
     ]
-    branches = ["main", "master"]
+    branches = [ref] if ref else ["main", "master"]
     tried = []
     for br in branches:
         for fname in readme_names:
@@ -245,6 +277,11 @@ def build_jsonld(
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-url", default=RAW_DEFAULT)
+    ap.add_argument(
+        "--ref",
+        default=None,
+        help="Optional branch or tag (e.g., main, master, v1.x.x) when using a repo base URL",
+    )
     # Branch selection removed; we try common branches automatically
     ap.add_argument("--out", default="project_knowledge.jsonld")
     ap.add_argument("--license-url", default="https://opensource.org/licenses/MIT")
@@ -255,7 +292,7 @@ def main():
     if args.local_readme:
         md = Path(args.local_readme).read_text(encoding="utf-8")
     else:
-        md = fetch_readme(args.repo_url)
+        md = fetch_readme(args.repo_url, ref=args.ref)
     soup = md_to_soup(md)
     sections = extract_sections(soup)
 
