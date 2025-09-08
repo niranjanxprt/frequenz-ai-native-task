@@ -27,7 +27,11 @@ RAW_DEFAULT = "https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-pyt
 DEFAULT_BRANCH = "main"
 
 def fetch_readme(repo_url: str, branch: str) -> str:
-    """Fetch README text from a raw GitHub URL base.
+    """Fetch README text from a raw GitHub URL.
+
+    Accepts either:
+    - a full raw README URL (e.g., https://raw.githubusercontent.com/.../main/README.md), or
+    - a repo raw base URL (e.g., https://raw.githubusercontent.com/org/repo), plus ``branch``.
 
     Tries several common filename variants and adds headers to reduce 403/429s.
     Raises a RuntimeError with guidance to use --local-readme if all attempts fail.
@@ -39,6 +43,24 @@ def fetch_readme(repo_url: str, branch: str) -> str:
             "Accept": "text/plain, text/markdown, */*",
         }
     )
+    # If a full README path was provided, try it directly first
+    direct = []
+    lower = repo_url.lower()
+    if lower.endswith((".md", ".rst", ".txt")) or "/readme" in lower:
+        direct.append(repo_url)
+        # If the URL hardcodes /main/ but a different branch was selected, try swapping it in
+        if "/main/" in repo_url and branch and branch != "main":
+            direct.append(repo_url.replace("/main/", f"/{branch}/"))
+
+    for url in direct:
+        try:
+            r = session.get(url, timeout=20)
+            if r.status_code == 200 and len(r.text) > 120:
+                return r.text
+        except Exception:
+            pass
+
+    # Otherwise, construct candidates from base + branch + common names
     candidates = [
         "README.md",
         "README.MD",

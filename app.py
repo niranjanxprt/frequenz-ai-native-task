@@ -107,19 +107,19 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("Extract JSON‑LD")
     repo_url = st.text_input(
-        "Repo raw base URL",
-        value="https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python",
-        help="Raw GitHub base for the repo (no trailing slash for file)",
+        "Raw README URL (or repo base)",
+        value="https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python/main/README.md",
+        help="Paste a full raw README URL, or a repo base like https://raw.githubusercontent.com/org/repo",
     )
     branch = st.text_input("Branch", value="main")
     if st.button("Extract from README.md"):
         import extract
 
         try:
-            # Basic validation for raw GitHub base URL
+            # Basic validation for raw GitHub URL
             if not repo_url.startswith("https://raw.githubusercontent.com/"):
                 raise ValueError(
-                    "Repo raw base URL must start with https://raw.githubusercontent.com/ (check spelling)."
+                    "URL must start with https://raw.githubusercontent.com/ (check spelling)."
                 )
             md = extract.fetch_readme(repo_url, branch)
             soup = extract.md_to_soup(md)
