@@ -207,7 +207,13 @@ with col2:
                 if svg_bytes:
                     st.download_button(label="Download SVG", data=svg_bytes, file_name="project_knowledge.svg", mime="image/svg+xml")
                 else:
-                    st.info("SVG export requires Graphviz 'dot' installed.")
+                    st.info("SVG export requires Graphviz 'dot' installed. Offering DOT download instead.")
+                    st.download_button(
+                        label="Download DOT",
+                        data=dot.encode("utf-8"),
+                        file_name="project_knowledge.dot",
+                        mime="text/vnd.graphviz",
+                    )
         elif view == "Static (Graphviz DOT)":
             st.graphviz_chart(dot, use_container_width=True)
             # Offer SVG download if Graphviz 'dot' is available
@@ -230,7 +236,13 @@ with col2:
             if svg_bytes2:
                 st.download_button(label="Download SVG", data=svg_bytes2, file_name="project_knowledge.svg", mime="image/svg+xml")
             else:
-                st.info("SVG export requires Graphviz 'dot' installed.")
+                st.info("SVG export requires Graphviz 'dot' installed. Offering DOT download instead.")
+                st.download_button(
+                    label="Download DOT",
+                    data=dot.encode("utf-8"),
+                    file_name="project_knowledge.dot",
+                    mime="text/vnd.graphviz",
+                )
         try:
             G = viz.build_nx_graph(data)
             m = viz.nx_basic_metrics(G)
