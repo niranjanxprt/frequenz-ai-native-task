@@ -1,0 +1,115 @@
+{
+  "@context": {
+    "@vocab": "https://schema.org/",
+    "fre": "https://frequenz.com/ontology#"
+  },
+  "@type": "SoftwareApplication",
+  "name": "Frequenz SDK for Python",
+  "applicationCategory": "Energy management / Microgrid orchestration",
+  "description": "================================================",
+  "programmingLanguage": "Python",
+  "codeRepository": "https://github.com/frequenz-floss/frequenz-sdk-python",
+  "author": {
+    "@type": "Organization",
+    "name": "Frequenz"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://opensource.org/licenses/MIT",
+  "softwareRequirements": [
+    "Python 3.11",
+    "Python 3.12",
+    "Python 3.13"
+  ],
+  "installInstructions": {
+    "@type": "HowTo",
+    "name": "Install the Frequenz SDK for Python",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "text": "python3 -m pip install frequenz-sdk"
+      }
+    ]
+  },
+  "exampleOfWork": [
+    {
+      "@type": "SoftwareSourceCode",
+      "programmingLanguage": "Python",
+      "codeSampleType": "example",
+      "text": "python3 -m venv .venv\n. .venv/bin/activate"
+    }
+  ],
+  "subjectOf": [
+    {
+      "@type": "Question",
+      "name": "What is the Frequenz SDK for?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "================================================"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I install the SDK?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Installation:\n- python3 -m pip install frequenz-sdk"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Show me an example of how to use it.",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "python3 -m venv .venv\n. .venv/bin/activate"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What license is it under?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "License: https://opensource.org/licenses/MIT"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which Python versions does it require?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Requirements:\n- Python 3.11\n- Python 3.12\n- Python 3.13"
+      }
+    }
+  ],
+  "operatingSystem": " Ubuntu Linux 20.04",
+  "processorRequirements": " amd64, arm64",
+  "documentation": "https://frequenz-floss.github.io/frequenz-sdk-python/",
+  "downloadUrl": "https://pypi.org/project/frequenz-sdk/",
+  "issueTracker": "https://github.com/frequenz-floss/frequenz-sdk-python/issues",
+  "hasPart": [
+    {
+      "@type": "CreativeWork",
+      "name": "introduction",
+      "text": "A development kit to interact with the Frequenz development platform."
+    },
+    {
+      "@type": "CreativeWork",
+      "name": "supported platforms",
+      "text": "The following platforms are officially supported (test):\n\nPython:\n3.11 .. 3.13\nOperating System:\nUbuntu Linux 20.04\nArchitectures:\namd64, arm64"
+    },
+    {
+      "@type": "CreativeWork",
+      "name": "quick start",
+      "text": "We assume you are on a system with Python available. If that is not the case,\nplease\ndownload and install Python\nfirst.\n\nTo install the SDK, you probably want to create a new virtual environment first.\nFor example, if you use a\nsh\ncompatible shell, you can do this:\n\npython3 -m venv .venv\n. .venv/bin/activate\n\nThen, just install using\npip\n:\n\npython3 -m pip install frequenz-sdk"
+    },
+    {
+      "@type": "CreativeWork",
+      "name": "documentation",
+      "text": "For more information, please visit the\ndocumentation\nwebsite\n."
+    },
+    {
+      "@type": "CreativeWork",
+      "name": "contributing",
+      "text": "If you want to know how to build this project and contribute to it, please\ncheck out the\nContributing Guide\n.\n\n================================================"
+    }
+  ]
+}
