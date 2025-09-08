@@ -60,6 +60,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Extended UI accents beyond base theme
+st.markdown(
+    f"""
+    <style>
+    a, a:visited {{ color: var(--accent) !important; }}
+    [data-baseweb=select] > div {{ border-color: var(--accent) !important; }}
+    .stRadio > label, .stCheckbox > label {{ color: var(--accent) !important; }}
+    .stSlider [data-baseweb=slider] div[data-testid=stTickBar] ~ div > div {{ background: var(--accent) !important; }}
+    summary {{ color: var(--accent) !important; }}
+    .stAlert > div {{ border-left: 4px solid var(--accent); }}
+    pre code {{ border-left: 3px solid var(--accent); padding-left: 8px; display: block; }}
+    ul li::marker {{ color: var(--accent); }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 with st.sidebar:
     # Branding: show Frequenz logo if available or allow upload
     logo_candidates = []
