@@ -40,7 +40,15 @@ with st.sidebar:
     for ext in ("png", "jpg", "jpeg"):
         logo_candidates.extend(glob.glob(f"assets/*logo*.{ext}"))
         logo_candidates.extend(glob.glob(f"assets/*frequenz*.{ext}"))
-    logo_path = logo_candidates[0] if logo_candidates else None
+        # also check repo root common names
+        logo_candidates.extend(glob.glob(f"frequenz*logo*.{ext}"))
+        logo_candidates.extend(glob.glob(f"*frequenz*.{ext}"))
+    # Deduplicate while keeping order
+    seen=set(); ordered=[]
+    for p in logo_candidates:
+        if p not in seen:
+            seen.add(p); ordered.append(p)
+    logo_path = ordered[0] if ordered else None
     if logo_path:
         st.image(logo_path, caption=None, width=180)
     else:

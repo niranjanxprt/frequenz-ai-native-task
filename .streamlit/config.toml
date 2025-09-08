@@ -6,9 +6,11 @@ enableCORS = false
 enableXsrfProtection = true
 
 [theme]
-# Frequenz-inspired brand palette (adjust if you have official hex codes)
-primaryColor = "#00AEEF"            # Primary accent
-backgroundColor = "#FFFFFF"         # App background
-secondaryBackgroundColor = "#F1F5F9" # Sidebar/panels
-textColor = "#0B1221"               # Primary text
+# Frequenz-inspired dark theme based on sampled logo colors
+# Primary accent sampled ≈ #10D0B0
+primaryColor = "#10D0B0"
+# Dark background akin to site hero
+backgroundColor = "#0B1221"
+secondaryBackgroundColor = "#16202F"
+textColor = "#E6F4F1"
 font = "sans serif"
