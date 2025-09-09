@@ -150,20 +150,13 @@ make app
 # - Preset question dropdown for required queries
 ```
 
-#### Advanced Streamlit App (Production Demo)
+#### AI‑Enhanced Streamlit App
 
 ```bash
-# Start advanced app
-streamlit run app_advanced.py --server.port 8502
-# Or with Make  
-make app-advanced
-
-# Enhanced features:
-# - Multiple search methods (TF-IDF + optional MiniLM embeddings)
-# - Repository summarization
-# - Code analysis and summarization
-# - Extended preset questions
-# - Advanced semantic retrieval
+# Start AI-enhanced app
+streamlit run src/apps/app_enhanced.py --server.port 8503
+# Or with script
+python scripts/run_enhanced_app.py
 ```
 
 ## 🛠️ Development
@@ -181,7 +174,7 @@ make extract           # Extract knowledge graph
 make query             # Test query interface
 make compliance        # Run hiring task compliance tests
 make app               # Start basic Streamlit app
-make app-advanced      # Start advanced Streamlit app
+make app-ai            # Start AI-enhanced app
 ```
 
 ### Testing
@@ -239,7 +232,7 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │   ├── 🔧 visualize.py                    # Graph visualization (hiring task)
 │   └── 📂 apps/                           # 🌐 WEB APPLICATIONS
 │       ├── 🌐 app.py                      # Basic Streamlit demo
-│       └── 🌐 app_advanced.py             # Advanced Streamlit demo
+│       └── 🌐 app_enhanced.py            # AI‑Enhanced demo (optional)
 │
 ├── 📂 data/                               # 📊 GENERATED DATA & OUTPUTS
 │   ├── 📊 project_knowledge.jsonld        # Primary knowledge graph

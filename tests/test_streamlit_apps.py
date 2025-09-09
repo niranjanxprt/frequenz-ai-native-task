@@ -151,19 +151,7 @@ class TestStreamlitApps(unittest.TestCase):
         finally:
             stop_process(proc)
 
-    def test_advanced_app_starts(self):
-        app = APPS_DIR / "app_advanced.py"
-        self.assertTrue(app.exists(), f"Missing app: {app}")
-        proc = run_streamlit(app, port=8502)
-        try:
-            html = wait_for_http(
-                "http://127.0.0.1:8502",
-                "AI-Enhanced Assistant",
-                timeout=90.0,
-            )
-            self.assertIn("Frequenz SDK", html)
-        finally:
-            stop_process(proc)
+    # Advanced app removed; keep tests for basic and AI-enhanced only.
 
     def test_ai_enhanced_app_starts(self):
         app = APPS_DIR / "app_enhanced.py"

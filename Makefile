@@ -2,7 +2,7 @@
 # Cross-platform commands for testing, linting, and running
 # Works on Windows (with Git Bash), macOS, and Linux
 
-.PHONY: help test lint format clean install extract query app app-advanced setup
+.PHONY: help test lint format clean install extract query app setup
 
 # Detect Python command (python3 or python)
 PYTHON := $(shell command -v python3 2>/dev/null || echo python)
@@ -33,7 +33,6 @@ help:
 	@echo ""
 	@echo "Applications:"
 	@echo "  make app         - Run basic Streamlit app (port 8501)"
-	@echo "  make app-advanced - Run advanced Streamlit app (port 8502)"
 	@echo "  make app-ai      - Run AI-enhanced app with Perplexity/OpenAI/Gemini (port 8503)"
 	@echo ""
 	@echo "Example workflow:"
@@ -150,11 +149,6 @@ app:
 	@echo "🌐 Starting basic Streamlit app..."
 	@echo "Navigate to: http://localhost:8501"
 	@$(PYTHON) -m streamlit run src/apps/app.py
-
-app-advanced:
-	@echo "🚀 Starting advanced Streamlit app..."
-	@echo "Navigate to: http://localhost:8502"
-	@$(PYTHON) -m streamlit run src/apps/app_advanced.py --server.port 8502
 
 app-ai:
 	@echo "🤖 Starting AI-enhanced Streamlit app..."

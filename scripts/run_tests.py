@@ -75,7 +75,15 @@ def main():
         print(f"\n🔍 SYNTAX VALIDATION")
         print("-" * 30)
     
-    python_files = ["extract.py", "query.py", "visualize.py", "app.py", "app_advanced.py", "test_queries.py"]
+    python_files = [
+        "extract.py",
+        "query.py",
+        "visualize.py",
+        # moved apps live under src/apps
+        "src/apps/app.py",
+        "src/apps/app_enhanced.py",
+        "test_queries.py",
+    ]
     
     for py_file in python_files:
         if Path(py_file).exists():
