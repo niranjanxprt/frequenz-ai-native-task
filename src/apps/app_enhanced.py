@@ -576,6 +576,7 @@ def main():
         - No more confusing dropdowns or multiple buttons
         - Better spaced conversation history
         - Real-time web search with live data
+        - Uses GitIngest to enrich prompts with live repo summary and question‑relevant code/context
         - Automatic citations and sources
         - Context-aware responses for frequenz-sdk-python
         """)
