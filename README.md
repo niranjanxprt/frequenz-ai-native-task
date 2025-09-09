@@ -493,3 +493,9 @@ Mermaid source is also available at `assets/diagrams/sdk_architecture.mmd`. To r
 npm install -g @mermaid-js/mermaid-cli
 make diagrams
 ```
+
+Static SVG (downloadable):
+
+![SDK Architecture](assets/diagrams/sdk_architecture.svg)
+
+Note: Interactivity of links inside the SVG depends on the viewer. The Mermaid block above remains fully clickable on GitHub.
