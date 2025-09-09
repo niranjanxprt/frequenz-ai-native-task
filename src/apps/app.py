@@ -318,86 +318,60 @@ st.subheader("Questions & Answers")
 if not data:
     st.info("Load or generate a JSON‑LD file to begin.")
 else:
-    # Extract questions and answers directly from JSON-LD
-    questions_data = {}
+    # Build a comprehensive list of relevant questions from the knowledge graph
+    # 1) Start with any embedded Q&A
+    preset_questions = []
     for qobj in (data.get("subjectOf") or []):
         if isinstance(qobj, dict) and qobj.get("@type") == "Question":
-            question = qobj.get("name", "")
-            answer_obj = qobj.get("acceptedAnswer", {})
-            answer = answer_obj.get("text", "") if isinstance(answer_obj, dict) else ""
-            if question and answer:
-                questions_data[question] = answer
+            name = (qobj.get("name") or "").strip()
+            if name:
+                preset_questions.append(name)
 
-    if questions_data:
+    # 2) Add canonical questions for available sections/fields
+    canonical = []
+    canonical.append("What is the Frequenz SDK for?")
+    if data.get("installInstructions"):
+        canonical.append("How do I install the sdk?")
+    if data.get("exampleOfWork"):
+        canonical.append("Show me an example of how to use it.")
+    if data.get("featureList"):
+        canonical.append("What features does it have?")
+    if data.get("license"):
+        canonical.append("What license is it under?")
+    if data.get("softwareRequirements"):
+        canonical.append("Which Python versions does it require?")
+
+    # Merge and de-duplicate while preserving order
+    seen = set()
+    question_options = []
+    for qtxt in preset_questions + canonical:
+        if qtxt not in seen:
+            seen.add(qtxt)
+            question_options.append(qtxt)
+
+    if question_options:
         st.write("**💡 Select a question:**")
-        
-        # Create dropdown for questions
-        question_options = ["Select a question..."] + list(questions_data.keys())
-        selected_question = st.selectbox("Choose a question", question_options, key="q_dropdown")
-        
-        # Show answer when question is selected
+        selected_question = st.selectbox(
+            "Choose a question",
+            ["Select a question..."] + question_options,
+            key="q_dropdown",
+        )
+
         if selected_question != "Select a question...":
+            # Use query.py semantics to answer any selected question robustly
             st.success("🤖 Answer")
-            answer_text = questions_data[selected_question]
-            
-            # Format the answer appropriately
-            if selected_question == "Show me an example of how to use it.":
+            try:
+                answer_text, label = q.answer_semantic(selected_question, data)
+            except Exception:
+                # Defensive fallback to a bucketed answer
+                bucket = q.pick_bucket(selected_question)
+                answer_text = q.answer(data, bucket)
+                label = bucket
+
+            if label == "example":
                 st.code(answer_text, language="python")
-            elif "install" in selected_question.lower():
-                st.write(answer_text.replace("\\n", "\n"))
-            elif "require" in selected_question.lower():
-                st.write(answer_text.replace("\\n", "\n"))
             else:
-                st.write(answer_text)
-            
-            st.caption(f"Source: Knowledge Graph (schema.org compliant)")
-    
+                st.write(answer_text.replace("\\n", "\n"))
+            st.caption(f"Source: query.py ({label})")
     else:
-        st.warning("No questions found in the knowledge graph.")
-    
-    st.markdown("---")
-    st.write("**🎯 Or ask your own question:**")
-    qtext = st.text_input("Your custom question", placeholder="Enter your question about the Frequenz SDK...", key="q_custom")
-
-    @st.cache_resource(show_spinner=False)
-    def _get_retriever(payload_json: str):
-        payload = json.loads(payload_json)
-        return q.TfidfRetriever.from_data(payload)
-
-    if st.button("Answer", disabled=not qtext.strip()):
-        if qtext.strip():
-            # First try to find exact match in predefined questions
-            best_match = None
-            for question, answer in questions_data.items():
-                if any(word in qtext.lower() for word in question.lower().split() if len(word) > 3):
-                    best_match = (question, answer)
-                    break
-            
-            if best_match:
-                st.success("🤖 Answer")
-                question, answer = best_match
-                if "example" in question.lower():
-                    st.code(answer, language="python")
-                else:
-                    st.write(answer.replace("\\n", "\n"))
-                st.caption(f"Source: Knowledge Graph - {question}")
-            else:
-                # Fall back to TF-IDF search
-                try:
-                    retriever = _get_retriever(json.dumps(data, sort_keys=True))
-                    results = retriever.search(qtext, top_k=1)
-                except Exception:
-                    results = q.retrieve_semantic(qtext, data, top_k=1)
-                
-                if not results:
-                    st.error("No relevant content found.")
-                else:
-                    top = results[0]
-                    st.success("🤖 Answer")
-                    if top["label"] == "example":
-                        st.code(top["text"], language="python")
-                    else:
-                        st.write(top["text"])
-                    st.caption(f"Source: {top['label']} (confidence: {top['score']:.2f})")
-        else:
-            st.warning("Please enter a question first.")
+        st.warning("No questions could be generated from the knowledge graph.")
