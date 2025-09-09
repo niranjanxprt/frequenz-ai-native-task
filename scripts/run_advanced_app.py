@@ -41,7 +41,9 @@ def kill_existing_process(pid_file: Path):
 
     try:
         if os.name == "nt":  # Windows
-            subprocess.run(["taskkill", "/F", "/PID", str(pid)], capture_output=True, check=False)
+            subprocess.run(
+                ["taskkill", "/F", "/PID", str(pid)], capture_output=True, check=False
+            )
         else:  # Unix-like
             os.kill(pid, signal.SIGTERM)
         print(f"✅ Stopped existing process (PID: {pid})")
@@ -106,9 +108,15 @@ def run_streamlit_app(port: int, run_dir: Path, streamlit_dir: Path) -> bool:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run AI‑enhanced Streamlit app with logging and PID control")
-    parser.add_argument("--port", "-p", type=int, default=8503, help="Port to run on (default: 8503)")
-    parser.add_argument("--kill", "-k", action="store_true", help="Kill existing process and exit")
+    parser = argparse.ArgumentParser(
+        description="Run AI‑enhanced Streamlit app with logging and PID control"
+    )
+    parser.add_argument(
+        "--port", "-p", type=int, default=8503, help="Port to run on (default: 8503)"
+    )
+    parser.add_argument(
+        "--kill", "-k", action="store_true", help="Kill existing process and exit"
+    )
     args = parser.parse_args()
 
     run_dir, streamlit_dir = setup_directories()

@@ -196,7 +196,7 @@ def _build_docs(data) -> List[Tuple[str, str]]:
     if data.get("name"):
         docs.append(("name", str(data.get("name"))))
     # FAQs from subjectOf
-    for qobj in (data.get("subjectOf") or []):
+    for qobj in data.get("subjectOf") or []:
         if isinstance(qobj, dict) and qobj.get("@type") == "Question":
             qname = (qobj.get("name") or "").strip()
             ans = qobj.get("acceptedAnswer", {})
@@ -253,7 +253,7 @@ def answer_semantic(question: str, data) -> Tuple[str, str]:
     if label.startswith("faq:"):
         q_text = label.split(":", 1)[1].strip()
         # Look up the matching answer directly from JSON-LD
-        for qobj in (data.get("subjectOf") or []):
+        for qobj in data.get("subjectOf") or []:
             if isinstance(qobj, dict) and qobj.get("@type") == "Question":
                 name = (qobj.get("name") or "").strip()
                 if name == q_text:

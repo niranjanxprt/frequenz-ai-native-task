@@ -23,8 +23,8 @@ current_dir = Path(__file__).parent
 src_dir = current_dir.parent
 sys.path.insert(0, str(src_dir))
 
-import query as q
-import visualize as viz
+import query as q  # noqa: E402
+import visualize as viz  # noqa: E402
 
 
 @st.cache_data(show_spinner=False)
@@ -111,16 +111,16 @@ with st.sidebar:
 
     st.header("Data Source")
     default_path = "project_knowledge.jsonld"
-    
+
     # Download button for JSON-LD
     if Path(default_path).exists():
-        with open(default_path, 'rb') as f:
+        with open(default_path, "rb") as f:
             st.download_button(
                 label="📥 Download Knowledge Graph (JSON-LD)",
                 data=f.read(),
                 file_name=default_path,
                 mime="application/ld+json",
-                help="Download the extracted knowledge graph as JSON-LD file"
+                help="Download the extracted knowledge graph as JSON-LD file",
             )
 
     st.markdown("---")
@@ -321,7 +321,7 @@ else:
     # Build a comprehensive list of relevant questions from the knowledge graph
     # 1) Start with any embedded Q&A
     preset_questions = []
-    for qobj in (data.get("subjectOf") or []):
+    for qobj in data.get("subjectOf") or []:
         if isinstance(qobj, dict) and qobj.get("@type") == "Question":
             name = (qobj.get("name") or "").strip()
             if name:

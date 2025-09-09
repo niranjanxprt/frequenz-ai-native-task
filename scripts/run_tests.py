@@ -3,6 +3,7 @@
 Production-quality test runner for the AI-Native knowledge graph project.
 Runs comprehensive quality checks including linting, testing, and compliance validation.
 """
+
 import subprocess
 import sys
 import argparse
@@ -30,9 +31,19 @@ def run_command(cmd: list, description: str) -> bool:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run hiring task compliance and quality checks")
-    parser.add_argument("--fast", action="store_true", help="Skip slower quality checks, run only compliance")
-    parser.add_argument("--skip-compliance", action="store_true", help="Skip hiring task compliance tests")
+    parser = argparse.ArgumentParser(
+        description="Run hiring task compliance and quality checks"
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Skip slower quality checks, run only compliance",
+    )
+    parser.add_argument(
+        "--skip-compliance",
+        action="store_true",
+        help="Skip hiring task compliance tests",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     args = parser.parse_args()
 
@@ -47,35 +58,35 @@ def main():
 
     # 1. Code Quality with Ruff (always run unless --fast)
     if not args.fast:
-        print(f"\n📋 CODE QUALITY & FORMATTING")
+        print("\n📋 CODE QUALITY & FORMATTING")
         print("-" * 30)
-        
+
         # Ruff linting
-        results.append(run_command([
-            "ruff", "check", "*.py"
-        ], "Code linting"))
-        
+        results.append(run_command(["ruff", "check", "*.py"], "Code linting"))
+
         # Ruff formatting check
-        results.append(run_command([
-            "ruff", "format", "--check", "."
-        ], "Code formatting"))
+        results.append(
+            run_command(["ruff", "format", "--check", "."], "Code formatting")
+        )
 
     # 2. Hiring Task Compliance Tests (combined)
     if not args.skip_compliance:
-        print(f"\n🎯 HIRING TASK COMPLIANCE (combined)")
+        print("\n🎯 HIRING TASK COMPLIANCE (combined)")
         print("-" * 30)
-        results.append(run_command(["python", "tests/test_compliance.py"], "Compliance tests"))
+        results.append(
+            run_command(["python", "tests/test_compliance.py"], "Compliance tests")
+        )
 
     # 3. Basic Syntax Checks moved into compliance test
 
     # 5. Final Summary
     print(f"\n{'=' * 50}")
-    print(f"🏆 FINAL QUALITY REPORT")
+    print("🏆 FINAL QUALITY REPORT")
     print(f"{'=' * 50}")
-    
+
     passed = sum(results)
     total = len(results)
-    
+
     if passed == total:
         print(f"✅ ALL CHECKS PASSED ({passed}/{total})")
         print("🎉 Code is production-ready!")
