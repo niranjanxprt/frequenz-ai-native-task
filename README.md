@@ -139,7 +139,7 @@ poetry run visualize --format svg --out knowledge_graph.svg
 
 ```bash
 # Start basic app
-streamlit run app.py
+streamlit run src/apps/app.py
 # Or with Make
 make app
 
@@ -157,6 +157,9 @@ make app
 streamlit run src/apps/app_advanced.py --server.port 8503
 # Or with script
 python scripts/run_advanced_app.py
+
+# Optional: provide Perplexity API key via .env or sidebar
+cp .env.example .env  # then edit .env to add PERPLEXITY_API_KEY
 ```
 
 ## 🛠️ Development
@@ -165,16 +168,19 @@ python scripts/run_advanced_app.py
 
 ```bash
 make help              # Show all available commands
-make install           # Install dependencies with Poetry
+make install           # Install dependencies (Poetry or pip)
 make test              # Run comprehensive test suite
-make lint              # Run code linting
-make format            # Format code with Ruff
+make test-fast         # Run tests without linting (faster)
+make lint              # Run code linting (Ruff)
+make format            # Format code (Ruff)
 make clean             # Clean temporary files
 make extract           # Extract knowledge graph
 make query             # Test query interface
 make compliance        # Run hiring task compliance tests
 make app               # Start basic Streamlit app
 make app-advanced      # Start advanced app
+make smoke             # Run compliance with Streamlit smoke tests
+make theme             # Show or create Streamlit theme config
 ```
 
 ### Testing
@@ -191,19 +197,34 @@ python tests/test_compliance.py -v
 RUN_STREAMLIT_SMOKE=1 python tests/test_compliance.py -v
 ```
 
+### Environment (.env)
+
+```bash
+# Copy example and fill in your Perplexity key (optional, for advanced app)
+cp .env.example .env
+
+# Edit .env to set:
+# PERPLEXITY_API_KEY=your_perplexity_api_key_here
+# PERPLEXITY_DEFAULT_MODEL=Sonar Pro
+```
+
+Notes:
+- The advanced app reads `.env` automatically (via python‑dotenv) and also accepts the key from the sidebar.
+- The basic app does not require any API keys.
+
 ### Code Quality
 
 ```bash
 # Linting with Ruff
 make lint
-ruff check *.py
+ruff check .
 
 # Code formatting
 make format
-ruff format *.py
+ruff format .
 
 # Check formatting without applying
-ruff format --check *.py
+ruff format --check .
 ```
 
 ## 📁 Project Structure
@@ -236,16 +257,18 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │   └── 📝 .gitkeep                        # Keep directory in git
 │
 ├── 📂 temp/                               # 🧪 RUNTIME (ignored by git)
-│   ├── 📁 .run/                           # Logs + PIDs for local runs
-│   └── ⚙️  .streamlit/config.toml         # Streamlit theme (kept in git)
+│   └── 📁 .run/                           # Logs + PIDs for local runs
+│
+├── 📂 .streamlit/                         # 🎨 STREAMLIT THEME
+│   └── ⚙️  config.toml                    # Project theme (committed)
 │
 ├── 📂 tests/                              # 🧪 TESTING SUITE
 │   └── 🧪 test_compliance.py              # Hiring task compliance tests
 │
 ├── 📂 scripts/                            # 🔧 UTILITY SCRIPTS
 │   ├── 🔧 run_tests.py                    # Production test runner
-│   ├── 🔧 run_basic_app.sh                # Start basic app
-│   └── 🔧 run_advanced_app.sh             # Start advanced app
+│   ├── 🔧 run_basic_app.py                # Start basic app
+│   └── 🔧 run_advanced_app.py             # Start advanced app
 │
 ├── 📂 docs/                               # 📚 DOCUMENTATION
 │   ├── 📚 hiring_task/                    # Hiring task requirements
@@ -258,11 +281,8 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │   │   └── frequenz_com_logo.jpeg         # Company logo
 │   └── 🎨 styles/                         # CSS, themes
 │
-└── 📂 temp/                               # 🗑️  ADVANCED/EXPERIMENTAL
-    ├── 🔧 build_advanced_knowledge.py     # Advanced knowledge builder
-    ├── 📄 frequenz-floss-*.txt            # Repository snapshot data
-    ├── 📊 advanced_chunks.jsonl           # Chunked data for retrieval
-    └── ⚙️  .streamlit/                     # Streamlit configuration
+└── 📂 temp/                               # 🧪 RUNTIME (ignored by git)
+    └── 📁 .run/                           # Logs + PIDs for local runs
 ```
 
 ### **📋 Directory Purposes**
@@ -274,7 +294,7 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 - **`scripts/`** - Utility scripts and automation
 - **`docs/`** - Project documentation and requirements
 - **`assets/`** - Static files (logos, images, styles)
-- **`temp/`** - Advanced features and experimental code
+- **`temp/`** - Runtime (ephemeral logs/PIDs only)
 
 ## 🎯 Hiring Task Compliance
 

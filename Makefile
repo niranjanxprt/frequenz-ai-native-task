@@ -2,7 +2,7 @@
 # Cross-platform commands for testing, linting, and running
 # Works on Windows (with Git Bash), macOS, and Linux
 
-.PHONY: help test lint format clean install extract query app app-advanced setup
+.PHONY: help test test-fast lint format format-check clean install extract query query-advanced app app-advanced compliance setup smoke status full-test dev
 
 # Detect Python command (python3 or python)
 PYTHON := $(shell command -v python3 2>/dev/null || echo python)
@@ -19,8 +19,7 @@ help:
 	@echo ""
 	@echo "Development:"
 	@echo "  make test        - Run all tests and quality checks"
-	@echo "  make test-fast   - Run tests without linting"
-	@echo "  make test-advanced - Run advanced query tests"
+	@echo "  make test-fast   - Run tests without linting (fast)"
 	@echo "  make lint        - Run code linting (Ruff)"
 	@echo "  make format      - Format code (Ruff)"
 	@echo "  make clean       - Clean temporary files"
@@ -34,6 +33,8 @@ help:
 	@echo "Applications:"
 	@echo "  make app         - Run basic Streamlit app (port 8501)"
 	@echo "  make app-advanced - Run advanced Streamlit app (port 8503)"
+	@echo "  make smoke       - Run compliance with Streamlit smoke tests"
+	@echo "  make theme       - Show or create Streamlit theme config"
 	@echo ""
 	@echo "Example workflow:"
 	@echo "  make setup       # Install deps + extract knowledge"
@@ -80,23 +81,19 @@ test:
 
 test-fast:
 	@echo "⚡ Running fast tests (skip linting)..."
-	@$(PYTHON) scripts/run_tests.py --skip-lint
-
-test-advanced:
-	@echo "🧪 Running advanced query system tests..."
-	@$(PYTHON) tests/test_advanced_query.py
+	@$(PYTHON) scripts/run_tests.py --fast
 
 lint:
 	@echo "🔍 Running linter..."
-	@$(PYTHON) -m ruff check *.py
+	@$(PYTHON) -m ruff check .
 
 format:
 	@echo "✨ Formatting code..."
-	@$(PYTHON) -m ruff format *.py
+	@$(PYTHON) -m ruff format .
 
 format-check:
 	@echo "🔍 Checking code formatting..."
-	@$(PYTHON) -m ruff format --check *.py
+	@$(PYTHON) -m ruff format --check .
 
 clean:
 	@echo "🧹 Cleaning temporary files..."
@@ -153,8 +150,40 @@ app:
 app-advanced:
 	@echo "🚀 Starting advanced Streamlit app..."
 	@echo "Navigate to: http://localhost:8503"
-	@echo "Configure API keys in sidebar for Perplexity, OpenAI, or Gemini"
+	@echo "Configure Perplexity API key in sidebar or .env"
 	@$(PYTHON) -m streamlit run src/apps/app_advanced.py --server.port 8503
+
+# Optional Streamlit smoke tests (headless) within compliance
+smoke:
+	@echo "🚬 Running compliance with Streamlit smoke tests..."
+	@RUN_STREAMLIT_SMOKE=1 $(PYTHON) tests/test_compliance.py -v
+
+# Streamlit theme management
+theme:
+	@echo "🎨 Streamlit theme configuration"
+	@echo "File: .streamlit/config.toml"
+	@if [ -f ".streamlit/config.toml" ]; then \
+		echo "Current theme:"; \
+		sed -n '1,200p' .streamlit/config.toml; \
+	else \
+		echo "No theme found. Creating default dark theme..."; \
+		mkdir -p .streamlit; \
+		printf "%s\n" "[server]" \
+		  "address = \"127.0.0.1\"" \
+		  "headless = true" \
+		  "enableCORS = false" \
+		  "enableXsrfProtection = true" \
+		  "" \
+		  "[theme]" \
+		  "base = \"dark\"" \
+		  "primaryColor = \"#62B5B1\"" \
+		  "backgroundColor = \"#2D1726\"" \
+		  "secondaryBackgroundColor = \"#556372\"" \
+		  "textColor = \"#E6EAEB\"" \
+		  "font = \"sans serif\"" \
+		  > .streamlit/config.toml; \
+		echo "Created .streamlit/config.toml"; \
+	fi
 
 # Visualization
 visualize-dot:
