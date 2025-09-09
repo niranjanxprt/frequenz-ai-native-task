@@ -23,6 +23,7 @@ help:
 	@echo "  make lint        - Run code linting (Ruff)"
 	@echo "  make format      - Format code (Ruff)"
 	@echo "  make clean       - Clean temporary files"
+	@echo "  make clean-env   - Recreate clean virtual environment"
 	@echo ""
 	@echo "Core Functionality (Hiring Task):"
 	@echo "  make extract     - Extract knowledge graph from README"
@@ -98,16 +99,18 @@ format-check:
 
 clean:
 	@echo "🧹 Cleaning temporary files..."
-	@if [ "$(OS)" = "Windows_NT" ]; then \
-		if exist __pycache__ rmdir /s /q __pycache__; \
-		if exist .pytest_cache rmdir /s /q .pytest_cache; \
-		if exist temp rmdir /s /q temp; \
-		del /q *.pyc 2>nul || true; \
-	else \
-		rm -rf __pycache__/ .pytest_cache/ temp/ *.pyc 2>/dev/null || true; \
-		find . -name "*.pyc" -delete 2>/dev/null || true; \
-		find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true; \
-	fi
+	@rm -rf __pycache__/ .pytest_cache/ temp/ *.pyc 2>/dev/null || true
+	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find . -name ".DS_Store" -delete 2>/dev/null || true
+
+clean-env:
+	@echo "🔄 Recreating clean virtual environment..."
+	@echo "Removing existing .venv..."
+	@rm -rf .venv 2>/dev/null || true
+	@echo "Creating new clean environment..."
+	@$(MAKE) install-pip
+	@echo "✅ Clean environment ready!"
 
 # Core functionality (hiring task requirements)
 extract:
