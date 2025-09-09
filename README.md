@@ -407,3 +407,89 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 ---
 
 > **Note**: This is a hiring task demonstration. The actual Frequenz SDK documentation and resources are available at [frequenz-floss.github.io/frequenz-sdk-python](https://frequenz-floss.github.io/frequenz-sdk-python/).
+### Architecture Diagram
+
+Below is a clickable Mermaid diagram that links to relevant sections of the Frequenz SDK repository.
+
+```mermaid
+flowchart TB
+    subgraph Client["Client Applications"]
+        App1[Application 1]
+        App2[Application 2]
+    end
+
+    subgraph Core["SDK Core"]
+        Actor["Actor System"]:::core
+        Microgrid["Microgrid Management"]:::core
+        TimeSeries["Time Series Processing"]:::core
+        Config["Config Management"]:::core
+    end
+
+    subgraph Components["Component Management"]
+        Battery["Battery Pool"]:::component
+        EVCharger["EV Charger Pool"]:::component
+        PV["PV Pool"]:::component
+        LogicalMeter["Logical Meter"]:::component
+    end
+
+    subgraph Power["Power Management"]
+        PowerDist["Power Distribution"]:::power
+        PowerManage["Power Managing"]:::power
+        PowerWrap["Power Wrapper"]:::power
+        Formula["Formula Engine"]:::power
+    end
+
+    subgraph Data["Data Processing"]
+        DataSource["Data Sourcing"]:::data
+        Resampling["Resampling"]:::data
+        RingBuffer["Ring Buffer"]:::data
+        MovingWindow["Moving Window"]:::data
+    end
+
+    Client --> Core
+    Core --> Components
+    Core --> Power
+    Core --> Data
+
+    Actor <--> Microgrid
+    Actor <--> TimeSeries
+    Actor <--> Config
+
+    Battery <--> PowerDist
+    EVCharger <--> PowerDist
+    PV <--> PowerDist
+    LogicalMeter <--> PowerDist
+
+    PowerDist <--> PowerManage
+    PowerManage <--> PowerWrap
+    Formula <--> TimeSeries
+
+    DataSource --> RingBuffer
+    RingBuffer --> MovingWindow
+    MovingWindow --> Resampling
+
+    click Actor "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/actor/"
+    click Microgrid "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/microgrid/"
+    click TimeSeries "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/timeseries/"
+    click Config "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/config/"
+    click PowerDist "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/microgrid/_power_distributing/"
+    click DataSource "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/microgrid/_data_sourcing/"
+    click Formula "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/timeseries/formula_engine/"
+    click Battery "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/timeseries/battery_pool/"
+    click EVCharger "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/timeseries/ev_charger_pool/"
+    click PV "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/timeseries/pv_pool/"
+    click PowerManage "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/microgrid/_power_managing/"
+    click LogicalMeter "https://github.com/frequenz-floss/frequenz-sdk-python/tree/v1.x.x/src/frequenz/sdk/timeseries/logical_meter/"
+
+    classDef core fill:#3498db,stroke:#2980b9,color:white
+    classDef component fill:#2ecc71,stroke:#27ae60,color:white
+    classDef power fill:#e67e22,stroke:#d35400,color:white
+    classDef data fill:#9b59b6,stroke:#8e44ad,color:white
+```
+
+Mermaid source is also available at `assets/diagrams/sdk_architecture.mmd`. To render a static SVG locally (for docs outside GitHub), install Mermaid CLI and run:
+
+```bash
+npm install -g @mermaid-js/mermaid-cli
+make diagrams
+```

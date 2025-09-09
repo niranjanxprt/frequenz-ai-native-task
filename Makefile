@@ -35,6 +35,7 @@ help:
 	@echo "  make app-advanced - Run advanced Streamlit app (port 8503)"
 	@echo "  make smoke       - Run compliance with Streamlit smoke tests"
 	@echo "  make theme       - Show or create Streamlit theme config"
+	@echo "  make diagrams    - Render Mermaid .mmd diagrams to SVG (requires mmdc)"
 	@echo ""
 	@echo "Example workflow:"
 	@echo "  make setup       # Install deps + extract knowledge"
@@ -182,7 +183,22 @@ theme:
 		  "textColor = \"#E6EAEB\"" \
 		  "font = \"sans serif\"" \
 		  > .streamlit/config.toml; \
-		echo "Created .streamlit/config.toml"; \
+			echo "Created .streamlit/config.toml"; \
+	fi
+
+# Render Mermaid diagrams (requires @mermaid-js/mermaid-cli: mmdc)
+diagrams:
+	@echo "🖼️  Rendering Mermaid diagrams in assets/diagrams (if mmdc is available)..."
+	@if command -v mmdc >/dev/null 2>&1; then \
+		for f in assets/diagrams/*.mmd; do \
+			[ -f "$$f" ] || continue; \
+			out="$${f%.mmd}.svg"; \
+			echo "Rendering $$f -> $$out"; \
+			mmdc -i "$$f" -o "$$out"; \
+		done; \
+		echo "✅ Diagrams rendered."; \
+	else \
+		echo "⚠️  Mermaid CLI (mmdc) not found. Install: npm install -g @mermaid-js/mermaid-cli"; \
 	fi
 
 # Visualization
