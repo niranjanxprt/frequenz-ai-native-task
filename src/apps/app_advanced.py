@@ -109,20 +109,16 @@ class PerplexityAPI:
         content_lower = content.lower()
         question_lower = question.lower()
 
-        # Non-technical question indicators
+        # Non-technical question indicators (only very specific personal questions)
         non_tech_keywords = [
-            "what are you",
-            "who are you",
-            "what is your",
-            "tell me about yourself",
-            "describe yourself",
-            "your life",
-            "your existence",
-            "your capabilities",
-            "personal",
-            "experience",
-            "biography",
-            "history",
+            "what are you personally",
+            "who are you as a person",
+            "tell me about your personal life",
+            "describe your personal background",
+            "your personal life",
+            "your personal existence",
+            "your personal biography",
+            "your personal history",
         ]
 
         # Check if question is non-technical OR response is generic
@@ -154,13 +150,13 @@ class PerplexityAPI:
 SPECIALIZATION: Frequenz SDK for Python - energy management, microgrids, async programming
 
 MANDATORY BEHAVIOR:
-If the user asks about non-technical topics or general AI capabilities, respond with:
-"I'm specialized in helping with the Frequenz SDK Python library and related technical topics. Please ask about the Frequenz SDK, Python programming, energy systems, or async programming."
+Always try to be helpful with Frequenz SDK related questions. Only use the fallback message for completely unrelated topics (like cooking, sports, entertainment).
+For project-related questions (links, documentation, resources, etc.), provide helpful information.
 
 EXPERTISE AREAS:
 ✅ Frequenz SDK Python library (frequenz-sdk-python)
 ✅ Async programming with asyncio patterns
-✅ Energy systems and microgrid orchestration  
+✅ Energy systems and microgrid orchestration
 ✅ Actor system architecture
 ✅ Time series data processing
 ✅ Power management algorithms
@@ -175,20 +171,28 @@ RESPONSE STYLE:
 - Explain async patterns clearly
 - Focus on practical implementation
 - Keep responses under 800 words
-- No citations or reference numbers
+- When asked for links/resources, provide direct URLs in your response
+- Always include relevant documentation links when helpful
 
 CONTEXT AVAILABLE:
 {context}
+
+IMPORTANT LINK GUIDANCE:
+When users ask for links, resources, or documentation, always provide these key URLs directly in your response:
+- Main Repository: https://github.com/frequenz-floss/frequenz-sdk-python
+- Documentation: https://frequenz-floss.github.io/frequenz-sdk-python/
+- PyPI Package: https://pypi.org/project/frequenz-sdk/
+- Issues/Support: https://github.com/frequenz-floss/frequenz-sdk-python/issues
+- Frequenz Website: https://frequenz.com/
 
 IMPORTANT: Base your responses on the provided context and current Frequenz SDK documentation. Focus on practical implementation guidance."""
 
             # Get the actual model ID from the friendly name
             model_id = self.models.get(model, self.models["Sonar"])
 
-            # Reinforce constraints in user message as well
-            constrained_question = f"""IMPORTANT: You are a Frequenz SDK documentation assistant. If this question is not about Frequenz SDK, Python programming, energy systems, or async programming, respond ONLY with: "I'm specialized in helping with the Frequenz SDK Python library and related technical topics. I don't have information about topics outside this scope. Please ask about the Frequenz SDK, Python programming, energy systems, or async programming."
-
-User question: {question}"""
+            # Use the question directly without overly restrictive constraints
+            # The system prompt already handles scope appropriately
+            constrained_question = question
 
             payload = {
                 "model": model_id,
@@ -233,14 +237,12 @@ User question: {question}"""
                     "frequenz.com",
                     "frequenz-floss.github.io",
                     "gitingest.com",
-                    
                     # Python ecosystem
                     "python.org",
                     "docs.python.org",
                     "pypi.org",
                     "readthedocs.io",
                     "pythonhosted.org",
-                    
                     # Dependencies from requirements.txt
                     "requests.readthedocs.io",
                     "beautiful-soup-4.readthedocs.io",
@@ -253,23 +255,22 @@ User question: {question}"""
                     "streamlit.io",
                     "docs.streamlit.io",
                     "saurabh-kumar.com/python-dotenv",
-                    
                     # Documentation platforms
                     "readthedocs.org",
                     "sphinx-doc.org",
                     "mkdocs.org",
                 ]
-                
+
                 citations = []
                 for citation in all_citations:
                     if isinstance(citation, dict):
                         url = citation.get("url", "")
                         if any(domain in url.lower() for domain in relevant_domains):
                             citations.append(citation)
-                
+
                 # Limit to top 5 most relevant citations to avoid clutter
                 citations = citations[:5]
-                
+
                 # No related questions returned (disabled in API request)
                 related_questions = []
 
@@ -318,6 +319,15 @@ def build_context_from_knowledge(knowledge_data: Dict) -> str:
         context_parts.append(f"Project: {name}")
     if description:
         context_parts.append(f"Description: {description}")
+
+    # Add key project links
+    context_parts.append(
+        "Key Project Links:\n"
+        "- Repository: https://github.com/frequenz-floss/frequenz-sdk-python\n"
+        "- Documentation: https://frequenz-floss.github.io/frequenz-sdk-python/\n"
+        "- PyPI: https://pypi.org/project/frequenz-sdk/\n"
+        "- Issues: https://github.com/frequenz-floss/frequenz-sdk-python/issues"
+    )
 
     # Add installation info
     install_info = knowledge_data.get("installInstructions", {})
@@ -385,14 +395,14 @@ def initialize_gitingest():
             # Try to load the existing GitIngest file
             gitingest_file = "data/frequenz-floss-frequenz-sdk-python-LLM.txt"
             if Path(gitingest_file).exists():
-                with open(gitingest_file, 'r', encoding='utf-8') as f:
+                with open(gitingest_file, "r", encoding="utf-8") as f:
                     content = f.read()
                 # Use first 3000 characters for context to avoid token limits
                 st.session_state.gitingest_context = content[:3000] + "..."
                 return st.session_state.gitingest_context
             else:
                 return None
-        except Exception as e:
+        except Exception:
             # Silently fail to avoid UI clutter
             return None
 
@@ -542,55 +552,34 @@ def render_ai_response(response: AIResponse):
         """,
             unsafe_allow_html=True,
         )
-        
-        # Render citations if available
+
+        # Render citations separately below the answer
         if response.citations and len(response.citations) > 0:
-            with st.expander(f"📚 Sources & Citations ({len(response.citations)} found)", expanded=False):
+            st.markdown("---")  # Separator line
+            st.subheader(f"📚 Sources & References ({len(response.citations)} found)")
+            st.caption(
+                "💡 Citations filtered to show only Frequenz SDK, Python, and dependency-related sources"
+            )
+
+            # Simple, clean citation list
+            for i, citation in enumerate(response.citations, 1):
+                title = citation.get("title", "Untitled Source")
+                url = citation.get("url", "#")
+
+                # Extract domain for display
+                try:
+                    from urllib.parse import urlparse
+
+                    domain = urlparse(url).netloc
+                except Exception:
+                    domain = url
+
+                # Create simple citation entry with direct markdown link
                 st.markdown(
-                    """
-                    <div style="background: #1a1a2e; padding: 20px; border-radius: 8px; border: 1px solid #333;">
-                        <h5 style="color: #62B5B1; margin-bottom: 15px;">🔗 Relevant Sources (Click to open)</h5>
-                    """,
-                    unsafe_allow_html=True
+                    f"**[{i}] [{title[:100]}{'...' if len(title) > 100 else ''}]({url})**"
                 )
-                
-                for i, citation in enumerate(response.citations, 1):
-                    title = citation.get("title", "Untitled")
-                    url = citation.get("url", "#")
-                    
-                    # Extract domain for display
-                    try:
-                        from urllib.parse import urlparse
-                        domain = urlparse(url).netloc
-                    except:
-                        domain = url
-                    
-                    # Create clickable citation with styling
-                    st.markdown(
-                        f"""
-                        <div style="margin: 10px 0; padding: 15px; background: #2a2a3e; border-radius: 8px; border-left: 3px solid #62B5B1;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div>
-                                    <strong style="color: #62B5B1;">[{i}] {title[:60]}{'...' if len(title) > 60 else ''}</strong><br>
-                                    <small style="color: #aaa;">🌐 {domain}</small>
-                                </div>
-                                <a href="{url}" target="_blank" style="
-                                    background: #62B5B1; 
-                                    color: #1a1a2e; 
-                                    padding: 8px 15px; 
-                                    border-radius: 6px; 
-                                    text-decoration: none; 
-                                    font-weight: bold;
-                                    font-size: 0.9em;
-                                ">🔗 Open</a>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                
-                st.markdown("</div>", unsafe_allow_html=True)
-                st.caption("💡 Citations are filtered to show only Frequenz SDK, Python, and dependency-related sources")
+                st.caption(f"🌐 {domain}")
+                st.markdown("")  # Add spacing
     else:
         # Error response
         st.error(f"❌ AI Error: {response.error}")
@@ -634,7 +623,9 @@ def process_question(question: str, perplexity_api, enhanced_context: str, data:
             if len(st.session_state.chat_history) > 10:
                 removed_count = len(st.session_state.chat_history) - 10
                 st.session_state.chat_history = st.session_state.chat_history[-10:]
-                st.info(f"ℹ️ Removed {removed_count} older conversation(s) to maintain 10-conversation limit for optimal performance.")
+                st.info(
+                    f"ℹ️ Removed {removed_count} older conversation(s) to maintain 10-conversation limit for optimal performance."
+                )
     else:
         # Fallback to knowledge graph answers when no API available
         with st.spinner("📚 Getting answer from knowledge graph..."):
@@ -849,7 +840,9 @@ def main():
             try:
                 from streamlit.components.v1 import html as st_html
 
-                html = viz.to_pyvis_html(data, height="600px", accent=ACCENT, dark=False)
+                html = viz.to_pyvis_html(
+                    data, height="600px", accent=ACCENT, dark=False
+                )
                 st_html(html, height=600)
 
                 # Download buttons
