@@ -28,12 +28,41 @@ BUCKETS = {
         "why",
         "description",
         "overview",
+        "about",
+        "summary",
     ],
-    "install": ["install", "pip", "pip3", "how to install", "setup", "requirements"],
-    "example": ["example", "code", "snippet", "usage", "demo"],
-    "features": ["feature", "component", "capability", "supports"],
+    "install": [
+        "install",
+        "pip",
+        "pip3",
+        "how to install",
+        "setup",
+        "installation",
+        "getting started",
+    ],
+    "example": ["example", "code", "snippet", "usage", "demo", "sample"],
+    "features": ["feature", "component", "capability", "supports", "abilities"],
     "license": ["license", "mit", "apache"],
-    "dependencies": ["dependenc", "requires", "python", "version"],
+    "dependencies": ["dependenc", "requires", "python", "version", "requirement"],
+    "documentation": [
+        "docs",
+        "documentation",
+        "read the docs",
+        "guide",
+        "website",
+        "link",
+    ],
+    "repository": ["repo", "repository", "github", "source code", "code"],
+    "issues": ["issues", "bug", "tracker", "issue tracker"],
+    "platforms": [
+        "operating system",
+        "platform",
+        "platforms",
+        "supported platforms",
+        "os",
+    ],
+    "architectures": ["architecture", "architectures", "arm", "arm64", "amd64", "x86"],
+    "name": ["name", "project name", "called"],
 }
 
 
@@ -99,6 +128,24 @@ def answer(data, bucket: str) -> str:
             if reqs
             else "No requirements listed."
         )
+    if bucket == "documentation":
+        url = data.get("documentation")
+        return f"Documentation: {url}" if url else "No documentation link available."
+    if bucket == "repository":
+        url = data.get("codeRepository")
+        return f"Repository: {url}" if url else "No repository URL available."
+    if bucket == "issues":
+        url = data.get("issueTracker")
+        return f"Issues: {url}" if url else "No issue tracker URL available."
+    if bucket == "platforms":
+        osn = data.get("operatingSystem")
+        return f"Operating system: {osn}" if osn else "No operating system listed."
+    if bucket == "architectures":
+        arch = data.get("processorRequirements")
+        return f"Architectures: {arch}" if arch else "No architectures listed."
+    if bucket == "name":
+        nm = data.get("name")
+        return f"Name: {nm}" if nm else "No name available."
     return "Sorry, I couldn't match your question. Try asking about installation, examples, features, or license."
 
 
@@ -135,6 +182,27 @@ def _build_docs(data) -> List[Tuple[str, str]]:
     reqs = data.get("softwareRequirements", [])
     if reqs:
         docs.append(("dependencies", "\n".join(reqs)))
+    # Documentation / links / metadata
+    if data.get("documentation"):
+        docs.append(("documentation", str(data.get("documentation"))))
+    if data.get("codeRepository"):
+        docs.append(("repository", str(data.get("codeRepository"))))
+    if data.get("issueTracker"):
+        docs.append(("issues", str(data.get("issueTracker"))))
+    if data.get("operatingSystem"):
+        docs.append(("platforms", str(data.get("operatingSystem"))))
+    if data.get("processorRequirements"):
+        docs.append(("architectures", str(data.get("processorRequirements"))))
+    if data.get("name"):
+        docs.append(("name", str(data.get("name"))))
+    # FAQs from subjectOf
+    for qobj in (data.get("subjectOf") or []):
+        if isinstance(qobj, dict) and qobj.get("@type") == "Question":
+            qname = (qobj.get("name") or "").strip()
+            ans = qobj.get("acceptedAnswer", {})
+            atext = (ans.get("text") or "") if isinstance(ans, dict) else ""
+            if qname and atext:
+                docs.append((f"faq:{qname}", atext))
     return docs
 
 
@@ -181,6 +249,20 @@ def answer_semantic(question: str, data) -> Tuple[str, str]:
     label = semantic_best_bucket(question, data)
     if not label:
         return "No answer found.", "unknown"
+    # Handle FAQ labels that contain the question text
+    if label.startswith("faq:"):
+        q_text = label.split(":", 1)[1].strip()
+        # Look up the matching answer directly from JSON-LD
+        for qobj in (data.get("subjectOf") or []):
+            if isinstance(qobj, dict) and qobj.get("@type") == "Question":
+                name = (qobj.get("name") or "").strip()
+                if name == q_text:
+                    ans = qobj.get("acceptedAnswer", {})
+                    atext = (ans.get("text") or "") if isinstance(ans, dict) else ""
+                    if atext:
+                        return atext, "faq"
+        # Fallback if not found for some reason
+        return answer(data, "purpose"), "purpose"
     return answer(data, label), label
 
 

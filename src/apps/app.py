@@ -340,6 +340,18 @@ else:
         canonical.append("What license is it under?")
     if data.get("softwareRequirements"):
         canonical.append("Which Python versions does it require?")
+    if data.get("documentation"):
+        canonical.append("Where can I find the docs?")
+    if data.get("codeRepository"):
+        canonical.append("Where is the source code repository?")
+    if data.get("issueTracker"):
+        canonical.append("Where are the issues tracked?")
+    if data.get("operatingSystem"):
+        canonical.append("What operating system is supported?")
+    if data.get("processorRequirements"):
+        canonical.append("Which architectures are supported?")
+    if data.get("name"):
+        canonical.append("What is the project name?")
 
     # Merge and de-duplicate while preserving order
     seen = set()
