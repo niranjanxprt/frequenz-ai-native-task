@@ -12,6 +12,7 @@ Defaults:
     --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python
     --out      ./project_knowledge.jsonld
 """
+
 import argparse
 import json
 import re
@@ -22,8 +23,11 @@ from markdown_it import MarkdownIt
 from bs4 import BeautifulSoup
 from typing import Optional, List, Tuple
 
-RAW_DEFAULT = "https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md"
+RAW_DEFAULT = (
+    "https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md"
+)
 DEFAULT_BRANCH = "main"
+
 
 def _to_raw_from_github_web(url: str) -> Optional[str]:
     """Convert a GitHub web URL with /blob/ to a raw URL.
@@ -49,6 +53,7 @@ def _to_raw_from_github_web(url: str) -> Optional[str]:
     except Exception:
         return None
     return None
+
 
 def fetch_readme(repo_url: str, ref: Optional[str] = None) -> str:
     """Fetch README text from a raw GitHub URL.
@@ -112,11 +117,15 @@ def fetch_readme(repo_url: str, ref: Optional[str] = None) -> str:
         + "\nTip: run with --local-readme path/to/README.md to parse a local file."
     )
 
+
 def md_to_soup(md_text: str) -> BeautifulSoup:
     html = MarkdownIt().render(md_text)
     return BeautifulSoup(html, "html.parser")
 
-def parse_supported_platforms(md_text: str) -> Tuple[Optional[List[str]], Optional[str], Optional[str]]:
+
+def parse_supported_platforms(
+    md_text: str,
+) -> Tuple[Optional[List[str]], Optional[str], Optional[str]]:
     """Parse the "Supported Platforms" section from README markdown.
 
     Returns (python_versions, operating_system, architectures)
@@ -141,6 +150,7 @@ def parse_supported_platforms(md_text: str) -> Tuple[Optional[List[str]], Option
                 rest = line.split(":", 1)[-1]
                 # patterns: "3.11 .. 3.13" or comma list
                 import re as _re
+
                 m = _re.search(r"(\d+\.\d+)\s*\.\.\s*(\d+\.\d+)", rest)
                 if m:
                     start = m.group(1)
@@ -149,13 +159,19 @@ def parse_supported_platforms(md_text: str) -> Tuple[Optional[List[str]], Option
                         s_major, s_minor = map(int, start.split("."))
                         e_major, e_minor = map(int, end.split("."))
                         if s_major == e_major:
-                            py_vers = [f"{s_major}.{x}" for x in range(s_minor, e_minor + 1)]
+                            py_vers = [
+                                f"{s_major}.{x}" for x in range(s_minor, e_minor + 1)
+                            ]
                         else:
                             py_vers = [start, end]
                     except Exception:
                         py_vers = [start, end]
                 else:
-                    vers = [v.strip() for v in rest.replace("**", "").split(",") if v.strip()]
+                    vers = [
+                        v.strip()
+                        for v in rest.replace("**", "").split(",")
+                        if v.strip()
+                    ]
                     if vers:
                         py_vers = vers
             elif low.startswith("- **operating system:**"):
@@ -164,9 +180,11 @@ def parse_supported_platforms(md_text: str) -> Tuple[Optional[List[str]], Option
                 arch = line.split(":", 1)[-1].strip().strip("*")
     return py_vers, os_name, arch
 
+
 def parse_links(md_text: str) -> Tuple[Optional[str], Optional[str]]:
     """Parse documentation and PyPI links from README markdown text."""
     import re as _re
+
     docs = None
     pypi = None
     m = _re.search(r"https://frequenz[-\w\.]+/frequenz-sdk-python/?", md_text)
@@ -177,6 +195,7 @@ def parse_links(md_text: str) -> Tuple[Optional[str], Optional[str]]:
         pypi = m2.group(0)
     return docs, pypi
 
+
 def extract_sections(soup: BeautifulSoup):
     # Build a mapping of h2/h3 section -> content (text + code)
     sections = {}
@@ -185,11 +204,19 @@ def extract_sections(soup: BeautifulSoup):
         if getattr(el, "name", None) in ("h1", "h2", "h3"):
             current = el.get_text(strip=True)
             sections[current.lower()] = []
-        elif current is not None and getattr(el, "name", None) in ("p", "ul", "ol", "pre"):
+        elif current is not None and getattr(el, "name", None) in (
+            "p",
+            "ul",
+            "ol",
+            "pre",
+        ):
             sections[current.lower()].append(el)
     return sections
 
-def sections_to_creativeworks(sections: dict, max_sections: int = 8, max_chars: int = 4000):
+
+def sections_to_creativeworks(
+    sections: dict, max_sections: int = 8, max_chars: int = 4000
+):
     """Convert parsed sections into a list of CreativeWork entries for JSON‑LD.
 
     Aggregates text from paragraphs/lists/code blocks. Truncates long content.
@@ -214,19 +241,23 @@ def sections_to_creativeworks(sections: dict, max_sections: int = 8, max_chars: 
             continue
         if len(text) > max_chars:
             text = text[: max_chars - 1] + "…"
-        works.append({
-            "@type": "CreativeWork",
-            "name": title_lc,
-            "text": text,
-        })
+        works.append(
+            {
+                "@type": "CreativeWork",
+                "name": title_lc,
+                "text": text,
+            }
+        )
         count += 1
         if count >= max_sections:
             break
     return works
 
+
 def first_paragraph(soup: BeautifulSoup) -> str:
     p = soup.find("p")
     return p.get_text(" ", strip=True) if p else ""
+
 
 def collect_code_examples(soup: BeautifulSoup, max_examples: int = 2):
     code_blocks = []
@@ -237,6 +268,7 @@ def collect_code_examples(soup: BeautifulSoup, max_examples: int = 2):
         if len(code_blocks) >= max_examples:
             break
     return code_blocks
+
 
 def find_install_instructions(soup: BeautifulSoup):
     # Look for common install strings
@@ -253,6 +285,7 @@ def find_install_instructions(soup: BeautifulSoup):
             out.append(c)
             seen.add(c)
     return out[:3]
+
 
 def guess_features(sections: dict):
     # Try to find a "features" section or bullet lists near intro
@@ -272,9 +305,23 @@ def guess_features(sections: dict):
         for el in sections[key]:
             for li in el.find_all("li"):
                 txt = re.sub(r"\s+", " ", li.get_text(" ", strip=True))
-                if any(k in txt.lower() for k in ["battery", "pv", "ev", "actor", "channel", "timeseries", "microgrid", "report", "trading"]):
+                if any(
+                    k in txt.lower()
+                    for k in [
+                        "battery",
+                        "pv",
+                        "ev",
+                        "actor",
+                        "channel",
+                        "timeseries",
+                        "microgrid",
+                        "report",
+                        "trading",
+                    ]
+                ):
                     feats.append(txt)
     return list(dict.fromkeys(feats))[:10]
+
 
 def build_jsonld(
     name: str,
@@ -330,9 +377,14 @@ def build_jsonld(
             ("What is the Frequenz SDK for?", desc or ""),
         ]
         # Install
-        steps = [s.get("text", "") for s in data.get("installInstructions", {}).get("step", [])]
+        steps = [
+            s.get("text", "")
+            for s in data.get("installInstructions", {}).get("step", [])
+        ]
         if steps:
-            qas.append(("How do I install the SDK?", "Installation:\n- " + "\n- ".join(steps)))
+            qas.append(
+                ("How do I install the SDK?", "Installation:\n- " + "\n- ".join(steps))
+            )
         # Example
         exs = data.get("exampleOfWork", [])
         if exs:
@@ -340,14 +392,24 @@ def build_jsonld(
         # Features
         feats = data.get("featureList", [])
         if feats:
-            qas.append(("What features does it have?", "Key features:\n- " + "\n- ".join(feats)))
+            qas.append(
+                (
+                    "What features does it have?",
+                    "Key features:\n- " + "\n- ".join(feats),
+                )
+            )
         # License
         if data.get("license"):
             qas.append(("What license is it under?", f"License: {data['license']}"))
         # Dependencies
         reqs = data.get("softwareRequirements", [])
         if reqs:
-            qas.append(("Which Python versions does it require?", "Requirements:\n- " + "\n- ".join(reqs)))
+            qas.append(
+                (
+                    "Which Python versions does it require?",
+                    "Requirements:\n- " + "\n- ".join(reqs),
+                )
+            )
 
         for q_text, a_text in qas:
             if not q_text or not a_text:
@@ -370,6 +432,7 @@ def build_jsonld(
 
     return data
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-url", default=RAW_DEFAULT)
@@ -381,8 +444,16 @@ def main():
     # Branch selection removed; we try common branches automatically
     ap.add_argument("--out", default="project_knowledge.jsonld")
     ap.add_argument("--license-url", default="https://opensource.org/licenses/MIT")
-    ap.add_argument("--python-versions", default="3.11,3.12", help="Comma-separated (e.g., 3.11,3.12)")
-    ap.add_argument("--local-readme", default=None, help="Optional local README.md path to parse instead of fetching")
+    ap.add_argument(
+        "--python-versions",
+        default="3.11,3.12",
+        help="Comma-separated (e.g., 3.11,3.12)",
+    )
+    ap.add_argument(
+        "--local-readme",
+        default=None,
+        help="Optional local README.md path to parse instead of fetching",
+    )
     args = ap.parse_args()
 
     if args.local_readme:
@@ -393,7 +464,10 @@ def main():
     sections = extract_sections(soup)
 
     name = "Frequenz SDK for Python"
-    desc = first_paragraph(soup) or "A development kit to interact with the Frequenz development platform."
+    desc = (
+        first_paragraph(soup)
+        or "A development kit to interact with the Frequenz development platform."
+    )
     installs = find_install_instructions(soup) or ["pip install frequenz-sdk"]
     features = guess_features(sections)
     examples = collect_code_examples(soup)
@@ -401,9 +475,13 @@ def main():
     detected_py, os_name, arch = parse_supported_platforms(md)
     docs_link, pypi_link = parse_links(md)
     # Final python versions: prefer detected, else CLI default
-    py_versions = detected_py or [v.strip() for v in args.python_versions.split(",") if v.strip()]
+    py_versions = detected_py or [
+        v.strip() for v in args.python_versions.split(",") if v.strip()
+    ]
 
-    jsonld = build_jsonld(name, desc, installs, features, examples, args.license_url, py_versions)
+    jsonld = build_jsonld(
+        name, desc, installs, features, examples, args.license_url, py_versions
+    )
     # Add section-level creative works for improved retrieval
     has_part = sections_to_creativeworks(sections)
     if has_part:
@@ -417,9 +495,12 @@ def main():
     if pypi_link:
         jsonld["downloadUrl"] = pypi_link
     # Issue tracker link (predictable from repository)
-    jsonld["issueTracker"] = "https://github.com/frequenz-floss/frequenz-sdk-python/issues"
+    jsonld["issueTracker"] = (
+        "https://github.com/frequenz-floss/frequenz-sdk-python/issues"
+    )
     Path(args.out).write_text(json.dumps(jsonld, indent=2), encoding="utf-8")
     print(f"Wrote {args.out}")
+
 
 if __name__ == "__main__":
     main()

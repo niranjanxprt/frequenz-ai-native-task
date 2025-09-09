@@ -14,12 +14,13 @@ Usage:
 With Poetry:
   poetry run visualize --format svg --out project_knowledge.svg
 """
+
 import argparse
 import json
-import shlex
 import subprocess
 from pathlib import Path
 from typing import Dict, Optional
+
 try:
     import networkx as nx  # optional
 except Exception:  # pragma: no cover
@@ -31,7 +32,7 @@ except Exception:  # pragma: no cover
 
 
 def esc(s: str) -> str:
-    return s.replace("\\", "\\\\").replace("\n", "\\n").replace("\"", "\\\"")
+    return s.replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
 
 
 def truncate(s: str, n: int = 60) -> str:
@@ -101,7 +102,7 @@ def build_nodes_edges(data: dict):
     exs = data.get("exampleOfWork", []) or []
     for i, ex in enumerate(exs, 1):
         eid = f"example_{i}"
-        label = f"Example {i} ({ex.get('programmingLanguage','')})".strip()
+        label = f"Example {i} ({ex.get('programmingLanguage', '')})".strip()
         nodes.append((eid, label, {"shape": "component"}))
         edges.append((root_id, eid, "example"))
 
@@ -242,10 +243,23 @@ def to_pyvis_html(
         raise ImportError("pyvis is not installed")
     G = build_nx_graph(data)
     colors = _palette(accent=accent, dark=dark)
-    net = Network(height=height, width=width, directed=True, notebook=False, bgcolor=colors["_meta"]["bg"], font_color=colors["_meta"]["text"])
+    net = Network(
+        height=height,
+        width=width,
+        directed=True,
+        notebook=False,
+        bgcolor=colors["_meta"]["bg"],
+        font_color=colors["_meta"]["text"],
+    )
     # Revert to a stable barnes_hut configuration that keeps nodes visible
     try:
-        net.barnes_hut(gravity=-2000, central_gravity=0.3, spring_length=150, spring_strength=0.05, damping=0.09)
+        net.barnes_hut(
+            gravity=-2000,
+            central_gravity=0.3,
+            spring_length=150,
+            spring_strength=0.05,
+            damping=0.09,
+        )
     except Exception:
         pass
     # Provide UI buttons to tweak physics/interaction
@@ -280,7 +294,15 @@ def to_pyvis_html(
     # Add edges
     for u, v, attrs in G.edges(data=True):
         label = attrs.get("label", "")
-        net.add_edge(u, v, label=label, color=colors["edge"], arrows="to", physics=True, smooth=True)
+        net.add_edge(
+            u,
+            v,
+            label=label,
+            color=colors["edge"],
+            arrows="to",
+            physics=True,
+            smooth=True,
+        )
     # Generate HTML string
     html = net.generate_html()
     # Simple legend appended below the graph
@@ -301,7 +323,7 @@ def to_dot(nodes, edges, theme: Optional[Dict[str, str]] = None) -> str:
     def attrs_to_str(attrs: dict) -> str:
         if not attrs:
             return ""
-        parts = [f"{k}=\"{esc(str(v))}\"" for k, v in attrs.items()]
+        parts = [f'{k}="{esc(str(v))}"' for k, v in attrs.items()]
         return " [" + ", ".join(parts) + "]"
 
     lines = [
@@ -310,9 +332,9 @@ def to_dot(nodes, edges, theme: Optional[Dict[str, str]] = None) -> str:
         "  node [shape=box, style=rounded, fontsize=10];",
     ]
     for nid, label, attrs in nodes:
-        lines.append(f"  {nid} [label=\"{esc(label)}\"]{attrs_to_str(attrs)};")
+        lines.append(f'  {nid} [label="{esc(label)}"]{attrs_to_str(attrs)};')
     for src, dst, label in edges:
-        lines.append(f"  {src} -> {dst} [label=\"{esc(label)}\"];\n")
+        lines.append(f'  {src} -> {dst} [label="{esc(label)}"];\n')
     lines.append("}")
     return "\n".join(lines)
 

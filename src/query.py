@@ -5,19 +5,30 @@ query.py
 Loads `project_knowledge.jsonld` and answers simple natural-language questions by doing a
 keyword-based semantic search over the structured JSON-LD content.
 """
+
 import sys
 import json
 import re
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
-from functools import lru_cache
+
 
 def load_knowledge(path="project_knowledge.jsonld"):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
+
 BUCKETS = {
-    "purpose": ["what is", "what's", "purpose", "use case", "for?", "why", "description", "overview"],
+    "purpose": [
+        "what is",
+        "what's",
+        "purpose",
+        "use case",
+        "for?",
+        "why",
+        "description",
+        "overview",
+    ],
     "install": ["install", "pip", "pip3", "how to install", "setup", "requirements"],
     "example": ["example", "code", "snippet", "usage", "demo"],
     "features": ["feature", "component", "capability", "supports"],
@@ -25,8 +36,10 @@ BUCKETS = {
     "dependencies": ["dependenc", "requires", "python", "version"],
 }
 
+
 def normalize(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
+
 
 def pick_bucket(question: str) -> str:
     ql = question.lower()
@@ -37,6 +50,7 @@ def pick_bucket(question: str) -> str:
             best, score = b, s
     return best
 
+
 def answer(data, bucket: str) -> str:
     if bucket == "purpose":
         desc = normalize(data.get("description", ""))
@@ -44,7 +58,11 @@ def answer(data, bucket: str) -> str:
     if bucket == "install":
         how = data.get("installInstructions", {})
         steps = [normalize(s.get("text", "")) for s in how.get("step", [])]
-        return "Installation:\n- " + "\n- ".join(steps) if steps else "No install instructions found."
+        return (
+            "Installation:\n- " + "\n- ".join(steps)
+            if steps
+            else "No install instructions found."
+        )
     if bucket == "example":
         exs = data.get("exampleOfWork", [])
         if not exs:
@@ -55,11 +73,11 @@ def answer(data, bucket: str) -> str:
             return (
                 "import asyncio\nfrom datetime import timedelta\nfrom frequenz.sdk import microgrid\n"
                 "from frequenz.sdk.actor import ResamplerConfig\n\n"
-                "async def run() -> None:\n    server_url = \"grpc://microgrid.sandbox.api.frequenz.io:62060\"\n"
+                'async def run() -> None:\n    server_url = "grpc://microgrid.sandbox.api.frequenz.io:62060"\n'
                 "    await microgrid.initialize(\n        server_url,\n        ResamplerConfig(resampling_period=timedelta(seconds=1)),\n    )\n"
                 "    grid_power_rx = microgrid.grid().power.new_receiver()\n"
                 "    async for point in grid_power_rx:\n        print(point.value)\n\n"
-                "if __name__ == \"__main__\":\n    asyncio.run(run())"
+                'if __name__ == "__main__":\n    asyncio.run(run())'
             )
         return text
     if bucket == "features":
@@ -76,10 +94,16 @@ def answer(data, bucket: str) -> str:
         return f"License: {data.get('license', 'Unknown')}"
     if bucket == "dependencies":
         reqs = data.get("softwareRequirements", [])
-        return "Requirements:\n- " + "\n- ".join(reqs) if reqs else "No requirements listed."
+        return (
+            "Requirements:\n- " + "\n- ".join(reqs)
+            if reqs
+            else "No requirements listed."
+        )
     return "Sorry, I couldn't match your question. Try asking about installation, examples, features, or license."
 
+
 # --- Semantic matching (TF-IDF cosine) ---
+
 
 def _build_docs(data) -> List[Tuple[str, str]]:
     """Collect labeled text documents from the JSON-LD for retrieval.
@@ -115,8 +139,7 @@ def _build_docs(data) -> List[Tuple[str, str]]:
 
 
 def semantic_best_bucket(question: str, data) -> Optional[str]:
-    """Return best-matching label via TF-IDF cosine. Falls back to pick_bucket on ImportError.
-    """
+    """Return best-matching label via TF-IDF cosine. Falls back to pick_bucket on ImportError or low confidence."""
     docs = _build_docs(data)
     if not docs:
         return None
@@ -128,12 +151,27 @@ def semantic_best_bucket(question: str, data) -> Optional[str]:
         return pick_bucket(question)
 
     texts = [t for _, t in docs]
-    labels = [l for l, _ in docs]
+    labels = [label for label, _ in docs]
     vec = TfidfVectorizer(stop_words="english")
     mat = vec.fit_transform(texts + [question])
     sims = cosine_similarity(mat[-1], mat[:-1]).ravel()
-    if sims.size == 0:
-        return None
+
+    # Fallback to keyword bucketing if no vocabulary overlap or low confidence
+    # Use higher threshold since TF-IDF can give false positives with short texts
+    if sims.size == 0 or sims.max() < 0.3:
+        return pick_bucket(question)
+
+    # Additional check: if keyword bucketing disagrees significantly, prefer keywords
+    keyword_bucket = pick_bucket(question)
+    tfidf_bucket = labels[int(sims.argmax())]
+
+    # For core queries, trust keyword bucketing over TF-IDF
+    if (
+        keyword_bucket in ["purpose", "install", "example"]
+        and keyword_bucket != tfidf_bucket
+    ):
+        return keyword_bucket
+
     idx = int(sims.argmax())
     return labels[idx]
 
@@ -163,18 +201,21 @@ def retrieve_semantic(question: str, data, top_k: int = 3) -> List[Dict[str, obj
         return [{"label": label, "text": answer(data, label), "score": 0.0}]
 
     texts = [t for _, t in docs]
-    labels = [l for l, _ in docs]
+    labels = [label for label, _ in docs]
     vec = TfidfVectorizer(stop_words="english")
     mat = vec.fit_transform(texts + [question])
     sims = cosine_similarity(mat[-1], mat[:-1]).ravel()
     order = sims.argsort()[::-1]
     results: List[Dict[str, object]] = []
     for idx in order[: max(1, top_k)]:
-        results.append({"label": labels[idx], "text": texts[idx], "score": float(sims[idx])})
+        results.append(
+            {"label": labels[idx], "text": texts[idx], "score": float(sims[idx])}
+        )
     return results
 
 
 # ---- Reusable Retriever ----------------------------------------------------
+
 
 @dataclass
 class TfidfRetriever:
@@ -198,26 +239,34 @@ class TfidfRetriever:
         except Exception as e:  # pragma: no cover
             raise ImportError("scikit-learn is required for semantic retrieval") from e
         texts = [t for _, t in docs]
-        labels = [l for l, _ in docs]
+        labels = [label for label, _ in docs]
         vec = TfidfVectorizer(stop_words="english")
         mat = vec.fit_transform(texts)
         return cls(labels=labels, texts=texts, _vec=vec, _mat=mat)
 
     def search(self, question: str, top_k: int = 3) -> List[Dict[str, object]]:
         from sklearn.metrics.pairwise import cosine_similarity
+
         qv = self._vec.transform([question])
         sims = cosine_similarity(qv, self._mat).ravel()
         order = sims.argsort()[::-1]
         results: List[Dict[str, object]] = []
         for idx in order[: max(1, top_k)]:
             results.append(
-                {"label": self.labels[idx], "text": self.texts[idx], "score": float(sims[idx])}
+                {
+                    "label": self.labels[idx],
+                    "text": self.texts[idx],
+                    "score": float(sims[idx]),
+                }
             )
         return results
 
+
 def main():
     if len(sys.argv) < 2:
-        print("Please provide a natural-language question, e.g., python query.py \"How do I install the sdk?\"")
+        print(
+            'Please provide a natural-language question, e.g., python query.py "How do I install the sdk?"'
+        )
         sys.exit(1)
     question = " ".join(sys.argv[1:])
     data = load_knowledge()
@@ -228,6 +277,7 @@ def main():
         # Very defensive fallback
         bucket = pick_bucket(question)
         print(answer(data, bucket))
+
 
 if __name__ == "__main__":
     main()

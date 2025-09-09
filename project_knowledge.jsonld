@@ -73,6 +73,14 @@
     },
     {
       "@type": "Question",
+      "name": "Show me an example of how to use it.",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "python3 -m venv .venv\n. .venv/bin/activate"
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Which Python versions does it require?",
       "acceptedAnswer": {
         "@type": "Answer",

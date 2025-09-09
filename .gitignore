@@ -1,8 +1,9 @@
-# Python bytecode and caches
+# Python bytecode and caches (all go to temp/ directory)
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 
 # Virtual environments
 .venv/
@@ -37,25 +38,29 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Logs and temp
+# Logs and runtime files
 *.log
+*.pid
 tmp/
-temp/
 .scratch/
 .run/
 .env
 .env.*
 
-# Streamlit
-# Track config but ignore other artifacts
-.streamlit/*
-!.streamlit/config.toml
-.streamlit.*.pid
-.streamlit.*.log
+# Temporary and generated files (organized in temp/)
+# All temporary files should go to temp/ directory
+# But keep the temp/ directory structure tracked
+temp/
+!temp/.streamlit/
+!temp/.streamlit/config.toml
+!temp/README.md
 
-# Generated visualization artifacts
-*.dot
-*.svg
+# Generated visualization artifacts (moved to data/)
+data/*.dot
+data/*.svg
+data/*.png
+
+# Legacy files (should not exist in root anymore)
 project_knowledge.dot
 project_knowledge.svg
 

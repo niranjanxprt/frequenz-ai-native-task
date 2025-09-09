@@ -1,25 +1,52 @@
 #!/usr/bin/env python3
 """
-Streamlit app (advanced) — adds an optional MiniLM embeddings retriever
-in addition to the baseline TF‑IDF semantic search. The rest of the UI
-(extraction + graph views) mirrors app.py so you can run both versions.
+Advanced Streamlit app with AI-enhanced responses using:
+- Perplexity Sonar API (real-time web search)
+- OpenAI GPT-4 API  
+- Google Gemini API
+- Enhanced semantic search
+- GitIngest repository analysis
 
 Run:
-  streamlit run app_advanced.py
-
-Notes:
-- MiniLM uses sentence-transformers (optional). If not installed, the
-  tab explains how to enable it and still lets you use TF‑IDF.
-- No dependency changes are required; this file guards imports.
+  streamlit run app_advanced.py --server.port 8502
 """
+
+import sys
 from pathlib import Path
 import json
 from typing import Optional, List, Dict, Tuple
 import glob
 import streamlit as st
+import time
+
+# Add src directory to path for imports
+current_dir = Path(__file__).parent
+src_dir = current_dir.parent
+sys.path.insert(0, str(src_dir))
 
 import query as q
 import visualize as viz
+import ai_integrations as ai
+
+try:
+    import query_advanced
+    GITINGEST_AVAILABLE = True
+except ImportError:
+    GITINGEST_AVAILABLE = False
+
+
+def initialize_session_state():
+    """Initialize session state variables for API keys and settings"""
+    if 'perplexity_api_key' not in st.session_state:
+        st.session_state.perplexity_api_key = ''
+    if 'openai_api_key' not in st.session_state:
+        st.session_state.openai_api_key = ''
+    if 'gemini_api_key' not in st.session_state:
+        st.session_state.gemini_api_key = ''
+    if 'preferred_ai' not in st.session_state:
+        st.session_state.preferred_ai = 'perplexity'
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
 
 
 @st.cache_data(show_spinner=False)
@@ -31,9 +58,82 @@ def load_jsonld(path: Optional[str], uploaded_bytes: Optional[bytes]):
     return None
 
 
-st.set_page_config(page_title="Frequenz SDK — Advanced Semantic App", layout="wide")
-st.title("Frequenz SDK — Advanced Semantic App (TF‑IDF + MiniLM)")
-st.caption("Visualize the JSON‑LD, then ask questions using TF‑IDF or optional MiniLM embeddings")
+def render_api_key_section():
+    """Render the API key configuration section in sidebar"""
+    st.sidebar.header("🤖 AI Configuration")
+    
+    # API Key inputs
+    with st.sidebar.expander("🔑 API Keys", expanded=False):
+        st.session_state.perplexity_api_key = st.text_input(
+            "Perplexity API Key",
+            value=st.session_state.get('perplexity_api_key', ''),
+            type="password",
+            help="Get your key from https://www.perplexity.ai/settings/api",
+            key="perplexity_key_input"
+        )
+        
+        st.session_state.openai_api_key = st.text_input(
+            "OpenAI API Key", 
+            value=st.session_state.get('openai_api_key', ''),
+            type="password",
+            help="Get your key from https://platform.openai.com/api-keys",
+            key="openai_key_input"
+        )
+        
+        st.session_state.gemini_api_key = st.text_input(
+            "Gemini API Key",
+            value=st.session_state.get('gemini_api_key', ''),
+            type="password", 
+            help="Get your key from https://aistudio.google.com/app/apikey",
+            key="gemini_key_input"
+        )
+    
+    # Show API status
+    st.sidebar.subheader("API Status")
+    apis_configured = []
+    
+    if st.session_state.perplexity_api_key:
+        st.sidebar.success("✅ Perplexity: Connected")
+        apis_configured.append('perplexity')
+    else:
+        st.sidebar.warning("⚠️ Perplexity: No API key")
+    
+    if st.session_state.openai_api_key:
+        st.sidebar.success("✅ OpenAI: Connected")
+        apis_configured.append('openai')
+    else:
+        st.sidebar.warning("⚠️ OpenAI: No API key")
+    
+    if st.session_state.gemini_api_key:
+        st.sidebar.success("✅ Gemini: Connected")
+        apis_configured.append('gemini')
+    else:
+        st.sidebar.warning("⚠️ Gemini: No API key")
+    
+    # Preferred AI selection
+    if apis_configured:
+        st.session_state.preferred_ai = st.sidebar.selectbox(
+            "Preferred AI",
+            apis_configured,
+            index=0 if apis_configured[0] == st.session_state.get('preferred_ai') else 0
+        )
+    
+    return apis_configured
+
+
+# Initialize session state
+initialize_session_state()
+
+# Page configuration
+st.set_page_config(
+    page_title="Frequenz SDK — AI-Enhanced Assistant", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Title and header
+st.title("🤖 Frequenz SDK — AI-Enhanced Assistant")
+st.caption("Powered by Perplexity Sonar, OpenAI GPT-4, Gemini + GitIngest Repository Analysis")
 
 # Accent styling for non-graph sections
 ACCENT = "#62B5B1"
@@ -59,18 +159,23 @@ with st.sidebar:
         logo_candidates.extend(glob.glob(f"assets/*frequenz*.{ext}"))
         logo_candidates.extend(glob.glob(f"frequenz*logo*.{ext}"))
         logo_candidates.extend(glob.glob(f"*frequenz*.{ext}"))
-    seen = set(); ordered = []
+    seen = set()
+    ordered = []
     for p in logo_candidates:
         if p not in seen:
-            seen.add(p); ordered.append(p)
+            seen.add(p)
+            ordered.append(p)
     if ordered:
         st.image(ordered[0], width=180)
 
     st.header("Data Source")
-    default_path = "data/project_knowledge_v2.jsonld"  # advanced KG by default
-    st.caption(f"Using: {default_path}")
+    default_path = "project_knowledge.jsonld"  # use same as basic app
+    st.caption(f"Using: gitingest (live repository analysis)")
 
-data = st.session_state.get("data") or load_jsonld(default_path, None) or load_jsonld("project_knowledge.jsonld", None)
+data = (
+    st.session_state.get("data")
+    or load_jsonld(default_path, None)
+)
 
 col1, col2 = st.columns([2, 3])
 
@@ -79,10 +184,10 @@ with col1:
     if not data:
         st.info("Load or generate a JSON‑LD file to begin.")
     else:
-        st.markdown(f"- Name: **{data.get('name','')}**")
-        st.markdown(f"- Description: {data.get('description','')}")
-        st.markdown(f"- License: `{data.get('license','')}`")
-        st.markdown(f"- Repository: `{data.get('codeRepository','')}`")
+        st.markdown(f"- Name: **{data.get('name', '')}**")
+        st.markdown(f"- Description: {data.get('description', '')}")
+        st.markdown(f"- License: `{data.get('license', '')}`")
+        st.markdown(f"- Repository: `{data.get('codeRepository', '')}`")
         reqs = data.get("softwareRequirements", [])
         if reqs:
             st.markdown("- Requirements: " + ", ".join(f"`{r}`" for r in reqs))
@@ -92,15 +197,25 @@ with col2:
     if not data:
         st.empty()
     else:
-        view = st.selectbox("Graph view", ["Interactive (PyVis)", "Static (Graphviz DOT)"], index=0)
+        view = st.selectbox(
+            "Graph view", ["Interactive (PyVis)", "Static (Graphviz DOT)"], index=0
+        )
         nodes, edges = viz.build_nodes_edges(data)
         dot = viz.to_dot(nodes, edges)
         if view == "Interactive (PyVis)":
             try:
                 from streamlit.components.v1 import html as st_html
-                html = viz.to_pyvis_html(data, height="650px", accent="#62B5B1", dark=True)
+
+                html = viz.to_pyvis_html(
+                    data, height="650px", accent="#62B5B1", dark=True
+                )
                 st_html(html, height=600)
-                st.download_button("Download interactive HTML", html, file_name="project_graph.html", mime="text/html")
+                st.download_button(
+                    "Download interactive HTML",
+                    html,
+                    file_name="project_graph.html",
+                    mime="text/html",
+                )
             except Exception as e:
                 st.error(f"Interactive view unavailable: {e}. Falling back to static.")
                 st.graphviz_chart(dot, use_container_width=True)
@@ -153,6 +268,7 @@ if data:
             st.markdown("**Example:**")
             st.code(exs[0].get("text", ""), language="python")
 tabs = st.tabs(["Semantic (TF‑IDF)", "Semantic (MiniLM)"])
+
 
 def _build_chunks(payload: Dict) -> List[Tuple[str, str]]:
     docs: List[Tuple[str, str]] = []
@@ -210,7 +326,9 @@ with tabs[0]:
                 top = results[0]
                 st.caption(f"Match: {top['label']} (score={top['score']:.2f})")
                 if top["label"].startswith("section:"):
-                    st.markdown(f"**Source section:** `{top['label'].split(':',1)[1]}`")
+                    st.markdown(
+                        f"**Source section:** `{top['label'].split(':', 1)[1]}`"
+                    )
                 txt = top["text"]
                 if top["label"] == "example" or ("def " in txt or "import " in txt):
                     st.code(txt, language="python")
@@ -223,9 +341,13 @@ with tabs[0]:
                         for r in results[1:]:
                             st.markdown(f"- {r['label']} (score={r['score']:.2f})")
                             if r["label"].startswith("section:"):
-                                st.markdown(f"  • section: `{r['label'].split(':',1)[1]}`")
+                                st.markdown(
+                                    f"  • section: `{r['label'].split(':', 1)[1]}`"
+                                )
                             rtxt = r["text"]
-                            if r["label"] == "example" or ("def " in rtxt or "import " in rtxt):
+                            if r["label"] == "example" or (
+                                "def " in rtxt or "import " in rtxt
+                            ):
                                 st.code(rtxt, language="python")
                             else:
                                 st.text(rtxt)
@@ -249,13 +371,15 @@ with tabs[1]:
                 payload = json.loads(payload_json)
                 docs = _build_chunks(payload)
                 texts = [t for _, t in docs]
-                labels = [l for l, _ in docs]
-                model = SentenceTransformer('all-MiniLM-L6-v2')
+                labels = [label for label, _ in docs]
+                model = SentenceTransformer("all-MiniLM-L6-v2")
                 embs = model.encode(texts) if texts else []
                 return model, labels, texts, embs
 
             if st.button("Answer (MiniLM)"):
-                model, labels, texts, embs = _get_minilm(json.dumps(data, sort_keys=True))
+                model, labels, texts, embs = _get_minilm(
+                    json.dumps(data, sort_keys=True)
+                )
                 if not texts:
                     st.error("No content to search.")
                 else:
@@ -266,10 +390,14 @@ with tabs[1]:
                         st.warning("No semantic results.")
                     else:
                         i0 = int(order[0])
-                        st.caption(f"Similarity: {float(sims[i0]):.2f}  •  Label: {labels[i0]}")
+                        st.caption(
+                            f"Similarity: {float(sims[i0]):.2f}  •  Label: {labels[i0]}"
+                        )
                         t0 = texts[i0]
                         if labels[i0].startswith("section:"):
-                            st.markdown(f"**Source section:** `{labels[i0].split(':',1)[1]}`")
+                            st.markdown(
+                                f"**Source section:** `{labels[i0].split(':', 1)[1]}`"
+                            )
                         if labels[i0] == "example" or ("def " in t0 or "import " in t0):
                             st.code(t0, language="python")
                             if st.button("Summarize code", key="sum_trf"):
@@ -280,25 +408,15 @@ with tabs[1]:
                             with st.expander("Other relevant matches"):
                                 for i in order[1:]:
                                     lbl = labels[int(i)]
-                                    st.markdown(f"- {lbl} (score={float(sims[int(i)]):.2f}) — {texts[int(i)][:160]}…")
+                                    st.markdown(
+                                        f"- {lbl} (score={float(sims[int(i)]):.2f}) — {texts[int(i)][:160]}…"
+                                    )
                                     if lbl.startswith("section:"):
-                                        st.markdown(f"  • section: `{lbl.split(':',1)[1]}`")
-                                
+                                        st.markdown(
+                                            f"  • section: `{lbl.split(':', 1)[1]}`"
+                                        )
+
         except Exception:
-            st.info("sentence-transformers not installed. Enable with: pip install sentence-transformers (and torch).")
-
-
-def _summarize_code(code: str) -> str:
-    """Heuristic code summary: imports, function defs, SDK keywords, line count."""
-    lines = [ln.rstrip() for ln in code.splitlines()]
-    import re
-    imports = [ln for ln in lines if ln.strip().startswith("import ") or ln.strip().startswith("from ")]
-    defs = [ln.strip() for ln in lines if re.match(r"^(async\s+def|def)\s+", ln.strip())]
-    sdk_refs = sorted(set([w for w in ["frequenz", "microgrid", "initialize", "ResamplerConfig", "receiver", "asyncio"] if w in code]))
-    bullets = [
-        f"- Lines: {len(lines)}",
-        f"- Imports: {', '.join(imports[:5])}{'…' if len(imports) > 5 else ''}" if imports else "- Imports: none",
-        f"- Functions: {', '.join(defs[:3])}{'…' if len(defs) > 3 else ''}" if defs else "- Functions: none",
-        f"- SDK refs: {', '.join(sdk_refs)}" if sdk_refs else "- SDK refs: none",
-    ]
-    return "\n".join(["**Code summary**:"] + bullets)
+            st.info(
+                "sentence-transformers not installed. Enable with: pip install sentence-transformers (and torch)."
+            )
