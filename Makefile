@@ -15,7 +15,8 @@ help:
 	@echo "Setup:"
 	@echo "  make setup       - Full setup (install + extract)"
 	@echo "  make install     - Install dependencies (Poetry or pip)"
-	@echo "  make install-pip - Install with pip (cross-platform)"
+	@echo "  make install-pip - Install with pip + requirements.txt"
+	@echo "  make install-req - Install only from requirements.txt (minimal)"
 	@echo ""
 	@echo "Development:"
 	@echo "  make test        - Run all tests and quality checks"
@@ -51,11 +52,12 @@ setup: install extract
 
 install:
 	@echo "📦 Installing dependencies..."
+	@echo "Strategy: requirements.txt (primary) + pyproject.toml (Poetry + dev tools)"
 	@if command -v poetry >/dev/null 2>&1; then \
-		echo "Using Poetry..."; \
+		echo "Using Poetry (reads pyproject.toml)..."; \
 		poetry install; \
 	else \
-		echo "Poetry not found, using pip..."; \
+		echo "Poetry not found, using pip + requirements.txt..."; \
 		$(MAKE) install-pip; \
 	fi
 

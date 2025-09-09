@@ -16,8 +16,10 @@ This project extracts key information from the **[Frequenz SDK for Python](https
 - 🔍 **Semantic Search**: TF-IDF + keyword-based retrieval for natural language queries  
 - 🚀 **Advanced Repository Analysis**: Live code ingestion via gitingest for real-time insights
 - 🎨 **Interactive Visualization**: PyVis and Graphviz network graphs
+- 🗺 **Architecture Diagrams**: Mermaid flowcharts showing SDK structure
 - 🌐 **Web Interface**: Streamlit apps for basic and advanced demonstrations
 - ⚡ **CLI Tools**: Command-line interface for all core functionality
+- 📋 **GitIngest Integration**: Live repository analysis via gitingest.com
 - 🪶 **Lightweight**: Minimal dependencies (~4MB vs 800MB+ with heavy ML libraries)
 - 🧪 **Production Quality**: Comprehensive testing, linting, and cross-platform support
 
@@ -142,6 +144,56 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+## 🗺 Architecture & Repository Analysis
+
+### SDK Architecture Diagram
+
+This project includes a detailed architecture diagram of the Frequenz SDK:
+
+![SDK Architecture](assets/diagrams/sdk_architecture.svg)
+
+The diagram shows the main components:
+- **Core System**: Actor framework, Microgrid management, Time series processing
+- **Component Management**: Battery, EV Charger, PV, and Logical Meter pools
+- **Power Management**: Distribution algorithms and power flow control
+- **Data Processing**: Real-time data sourcing, resampling, and buffering
+
+### GitIngest Integration ([gitingest.com](https://gitingest.com))
+
+This project leverages **GitIngest** for advanced repository analysis:
+
+#### What is GitIngest?
+[GitIngest](https://gitingest.com) is a tool that converts entire GitHub repositories into AI-friendly text formats for LLM consumption. It:
+- ✅ Extracts full repository structure and code
+- ✅ Filters out binary files and focuses on source code
+- ✅ Creates comprehensive context for AI analysis
+- ✅ Supports real-time repository ingestion
+
+#### Repository Analysis File
+
+The project includes a pre-processed GitIngest file:
+- **File**: `data/frequenz-floss-frequenz-sdk-python-LLM.txt` (1.6MB)
+- **Content**: Full Frequenz SDK repository structure + source code
+- **Usage**: Powers the advanced query system with deep code context
+- **Generated**: From [frequenz-floss/frequenz-sdk-python](https://github.com/frequenz-floss/frequenz-sdk-python)
+
+#### Advanced Queries with GitIngest
+
+```bash
+# Query with live repository analysis
+python src/query_advanced.py "How does the actor system work?"
+python src/query_advanced.py "Show me the power distribution algorithm"
+python src/query_advanced.py --analyze-structure
+
+# Live ingestion from GitHub (requires gitingest package)
+python src/query_advanced.py --repo https://github.com/frequenz-floss/frequenz-sdk-python "What are the main classes?"
+```
+
+The advanced query system combines:
+1. ✅ **JSON-LD knowledge graph** (structured metadata)
+2. ✅ **GitIngest repository analysis** (full source code context)
+3. ✅ **Semantic search** (TF-IDF + keyword matching)
 
 ## 📋 Usage
 
@@ -312,8 +364,9 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │       ├── 🌐 app.py                      # Basic Streamlit demo
 │       └── 🌐 app_advanced.py            # Advanced demo (optional)
 │
-├── 📂 data/                               # 📊 GENERATED DATA & OUTPUTS
+├── 📲 data/                               # 📊 GENERATED DATA & OUTPUTS
 │   ├── 📊 project_knowledge.jsonld        # Primary knowledge graph
+│   ├── 📋 frequenz-floss-frequenz-sdk-python-LLM.txt # GitIngest repository analysis (1.6MB)
 │   ├── 📈 knowledge_graph.dot             # DOT visualization file
 │   ├── 📈 knowledge_graph.svg             # SVG visualization file
 │   └── 📝 .gitkeep                        # Keep directory in git
@@ -338,7 +391,10 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │   │   └── Hiring_Task_PDF.pdf            # Original PDF
 │   └── 📚 examples/                       # Usage examples
 │
-├── 📂 assets/                             # 🖼️  STATIC ASSETS
+├── 📲 assets/                             # 🖼️  STATIC ASSETS
+│   ├── 🗺 diagrams/                       # Architecture diagrams
+│   │   ├── sdk_architecture.mmd           # Mermaid diagram source
+│   │   └── sdk_architecture.svg           # Rendered SVG diagram
 │   ├── 🖼️  logos/                         # Project logos
 │   │   └── frequenz_com_logo.jpeg         # Company logo
 │   └── 🎨 styles/                         # CSS, themes

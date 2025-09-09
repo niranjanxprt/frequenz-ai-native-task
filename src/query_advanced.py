@@ -89,11 +89,13 @@ class RepositoryContext:
 
             return cls(
                 summary=f"GitIngest analysis of frequenz-sdk-python from file {file_path}",
+                tree="\n".join(structure_lines),
                 content=content,
-                structure=structure_lines,
-                key_files=key_files,
+                file_count=len(key_files),
+                total_size=len(content),
+                languages=["py"],  # Default to Python since this is the Frequenz SDK
                 dependencies=dependencies[:10],
-                last_updated=datetime.now(),
+                structure={"key_files": key_files, "structure_lines": structure_lines},
             )
 
         except Exception as e:
