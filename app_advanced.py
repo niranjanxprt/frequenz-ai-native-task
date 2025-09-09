@@ -67,42 +67,10 @@ with st.sidebar:
         st.image(ordered[0], width=180)
 
     st.header("Data Source")
-    default_path = "project_knowledge.jsonld"
+    default_path = "data/project_knowledge_v2.jsonld"  # advanced KG by default
+    st.caption(f"Using: {default_path}")
 
-    st.markdown("---")
-    st.subheader("Extract JSON‑LD")
-    repo_url = st.text_input(
-        "Raw README URL (or GitHub /blob/ URL)",
-        value="https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md",
-        help=(
-            "Paste a full raw README URL (https://raw.githubusercontent.com/owner/repo/ref/README.md) "
-            "or a GitHub web URL with /blob/ (it will be converted automatically)."
-        ),
-    )
-    if st.button("Extract"):
-        import extract
-        try:
-            ru = repo_url.strip()
-            if not (ru.startswith("https://raw.githubusercontent.com/") or ru.startswith("https://github.com/")):
-                raise ValueError("URL must start with https://raw.githubusercontent.com/ or https://github.com/")
-            md = extract.fetch_readme(ru)
-            soup = extract.md_to_soup(md)
-            sections = extract.extract_sections(soup)
-            name = "Frequenz SDK for Python"
-            desc = extract.first_paragraph(soup) or ""
-            installs = extract.find_install_instructions(soup) or ["pip install frequenz-sdk"]
-            features = extract.guess_features(sections)
-            examples = extract.collect_code_examples(soup)
-            jsonld = extract.build_jsonld(
-                name, desc, installs, features, examples, "https://opensource.org/licenses/MIT", ["3.11", "3.12"]
-            )
-            Path(default_path).write_text(json.dumps(jsonld, indent=2), encoding="utf-8")
-            st.session_state["data"] = jsonld
-            st.success("Knowledge graph generated from README.")
-        except Exception as e:
-            st.error(f"Extraction failed: {e}")
-
-data = st.session_state.get("data") or load_jsonld(default_path, None)
+data = st.session_state.get("data") or load_jsonld(default_path, None) or load_jsonld("project_knowledge.jsonld", None)
 
 col1, col2 = st.columns([2, 3])
 
@@ -140,6 +108,50 @@ with col2:
             st.graphviz_chart(dot, use_container_width=True)
 
 st.markdown("---")
+st.subheader("Summarize Repo")
+if data:
+    if st.button("Summarize Repo"):
+        st.markdown("**Name:** " + data.get("name", ""))
+        desc = data.get("description", "")
+        if desc:
+            st.markdown(desc)
+        # Install summary
+        how = data.get("installInstructions", {})
+        steps = [s.get("text", "") for s in how.get("step", [])]
+        if steps:
+            st.markdown("**Install:**\n- " + "\n- ".join(steps))
+        # Features if any
+        feats = data.get("featureList", [])
+        if feats:
+            st.markdown("**Key features:**\n- " + "\n- ".join(map(str, feats[:5])))
+        # Platforms
+        reqs = data.get("softwareRequirements", [])
+        osn = data.get("operatingSystem")
+        arch = data.get("processorRequirements")
+        lines = []
+        if reqs:
+            lines.append("Python: " + ", ".join(reqs))
+        if osn:
+            lines.append("OS: " + osn)
+        if arch:
+            lines.append("Architectures: " + arch)
+        if lines:
+            st.markdown("**Supported platforms:**\n- " + "\n- ".join(lines))
+        # Links
+        links = []
+        if data.get("documentation"):
+            links.append(f"Docs: {data['documentation']}")
+        if data.get("downloadUrl"):
+            links.append(f"PyPI: {data['downloadUrl']}")
+        if data.get("issueTracker"):
+            links.append(f"Issues: {data['issueTracker']}")
+        if links:
+            st.markdown("**Links:**\n- " + "\n- ".join(links))
+        # Example snippet
+        exs = data.get("exampleOfWork", [])
+        if exs:
+            st.markdown("**Example:**")
+            st.code(exs[0].get("text", ""), language="python")
 tabs = st.tabs(["Semantic (TF‑IDF)", "Semantic (MiniLM)"])
 
 def _build_chunks(payload: Dict) -> List[Tuple[str, str]]:
@@ -163,6 +175,13 @@ def _build_chunks(payload: Dict) -> List[Tuple[str, str]]:
     reqs = payload.get("softwareRequirements", [])
     if reqs:
         docs.append(("dependencies", "\n".join(map(str, reqs))))
+    # Add section-level chunks
+    parts = payload.get("hasPart", []) or []
+    for part in parts:
+        name = str(part.get("name", "section")).strip()
+        text = str(part.get("text", "")).strip()
+        if text:
+            docs.append((f"section:{name}", text))
     return docs
 
 
@@ -190,18 +209,26 @@ with tabs[0]:
             else:
                 top = results[0]
                 st.caption(f"Match: {top['label']} (score={top['score']:.2f})")
-                if top["label"] == "example":
-                    st.code(top["text"], language="python")
+                if top["label"].startswith("section:"):
+                    st.markdown(f"**Source section:** `{top['label'].split(':',1)[1]}`")
+                txt = top["text"]
+                if top["label"] == "example" or ("def " in txt or "import " in txt):
+                    st.code(txt, language="python")
+                    if st.button("Summarize code", key="sum_fast"):
+                        st.markdown(_summarize_code(txt))
                 else:
-                    st.text(top["text"])
+                    st.text(txt)
                 if len(results) > 1:
                     with st.expander("Other relevant snippets"):
                         for r in results[1:]:
                             st.markdown(f"- {r['label']} (score={r['score']:.2f})")
-                            if r["label"] == "example":
-                                st.code(r["text"], language="python")
+                            if r["label"].startswith("section:"):
+                                st.markdown(f"  • section: `{r['label'].split(':',1)[1]}`")
+                            rtxt = r["text"]
+                            if r["label"] == "example" or ("def " in rtxt or "import " in rtxt):
+                                st.code(rtxt, language="python")
                             else:
-                                st.text(r["text"])
+                                st.text(rtxt)
 
 
 # Tab 2 — MiniLM (optional)
@@ -240,15 +267,38 @@ with tabs[1]:
                     else:
                         i0 = int(order[0])
                         st.caption(f"Similarity: {float(sims[i0]):.2f}  •  Label: {labels[i0]}")
-                        if labels[i0] == "example":
-                            st.code(texts[i0], language="python")
+                        t0 = texts[i0]
+                        if labels[i0].startswith("section:"):
+                            st.markdown(f"**Source section:** `{labels[i0].split(':',1)[1]}`")
+                        if labels[i0] == "example" or ("def " in t0 or "import " in t0):
+                            st.code(t0, language="python")
+                            if st.button("Summarize code", key="sum_trf"):
+                                st.markdown(_summarize_code(t0))
                         else:
-                            st.text(texts[i0])
+                            st.text(t0)
                         if len(order) > 1:
                             with st.expander("Other relevant matches"):
                                 for i in order[1:]:
-                                    st.markdown(f"- {labels[int(i)]} (score={float(sims[int(i)]):.2f})")
+                                    lbl = labels[int(i)]
+                                    st.markdown(f"- {lbl} (score={float(sims[int(i)]):.2f}) — {texts[int(i)][:160]}…")
+                                    if lbl.startswith("section:"):
+                                        st.markdown(f"  • section: `{lbl.split(':',1)[1]}`")
                                 
         except Exception:
             st.info("sentence-transformers not installed. Enable with: pip install sentence-transformers (and torch).")
 
+
+def _summarize_code(code: str) -> str:
+    """Heuristic code summary: imports, function defs, SDK keywords, line count."""
+    lines = [ln.rstrip() for ln in code.splitlines()]
+    import re
+    imports = [ln for ln in lines if ln.strip().startswith("import ") or ln.strip().startswith("from ")]
+    defs = [ln.strip() for ln in lines if re.match(r"^(async\s+def|def)\s+", ln.strip())]
+    sdk_refs = sorted(set([w for w in ["frequenz", "microgrid", "initialize", "ResamplerConfig", "receiver", "asyncio"] if w in code]))
+    bullets = [
+        f"- Lines: {len(lines)}",
+        f"- Imports: {', '.join(imports[:5])}{'…' if len(imports) > 5 else ''}" if imports else "- Imports: none",
+        f"- Functions: {', '.join(defs[:3])}{'…' if len(defs) > 3 else ''}" if defs else "- Functions: none",
+        f"- SDK refs: {', '.join(sdk_refs)}" if sdk_refs else "- SDK refs: none",
+    ]
+    return "\n".join(["**Code summary**:"] + bullets)

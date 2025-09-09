@@ -20,7 +20,7 @@ from pathlib import Path
 import requests
 from markdown_it import MarkdownIt
 from bs4 import BeautifulSoup
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 RAW_DEFAULT = "https://github.com/frequenz-floss/frequenz-sdk-python/blob/v1.x.x/README.md"
 DEFAULT_BRANCH = "main"
@@ -116,6 +116,67 @@ def md_to_soup(md_text: str) -> BeautifulSoup:
     html = MarkdownIt().render(md_text)
     return BeautifulSoup(html, "html.parser")
 
+def parse_supported_platforms(md_text: str) -> Tuple[Optional[List[str]], Optional[str], Optional[str]]:
+    """Parse the "Supported Platforms" section from README markdown.
+
+    Returns (python_versions, operating_system, architectures)
+    where python_versions is a list of version strings like ["3.11","3.12","3.13"].
+    """
+    py_vers: Optional[List[str]] = None
+    os_name: Optional[str] = None
+    arch: Optional[str] = None
+    lines = md_text.splitlines()
+    in_section = False
+    for i, line in enumerate(lines):
+        if line.strip().lower().startswith("## supported platforms"):
+            in_section = True
+            continue
+        if in_section:
+            if line.startswith("## ") and i != 0:
+                break  # next section
+            # bullets like "- **Python:** 3.11 .. 3.13"
+            low = line.lower().strip()
+            if low.startswith("- **python:**") or low.startswith("- **python:"):
+                # extract versions
+                rest = line.split(":", 1)[-1]
+                # patterns: "3.11 .. 3.13" or comma list
+                import re as _re
+                m = _re.search(r"(\d+\.\d+)\s*\.\.\s*(\d+\.\d+)", rest)
+                if m:
+                    start = m.group(1)
+                    end = m.group(2)
+                    try:
+                        s_major, s_minor = map(int, start.split("."))
+                        e_major, e_minor = map(int, end.split("."))
+                        if s_major == e_major:
+                            py_vers = [f"{s_major}.{x}" for x in range(s_minor, e_minor + 1)]
+                        else:
+                            py_vers = [start, end]
+                    except Exception:
+                        py_vers = [start, end]
+                else:
+                    vers = [v.strip() for v in rest.replace("**", "").split(",") if v.strip()]
+                    if vers:
+                        py_vers = vers
+            elif low.startswith("- **operating system:**"):
+                os_name = line.split(":", 1)[-1].strip().strip("*")
+            elif low.startswith("- **architectures:**"):
+                arch = line.split(":", 1)[-1].strip().strip("*")
+    return py_vers, os_name, arch
+
+def parse_links(md_text: str) -> Tuple[Optional[str], Optional[str]]:
+    """Parse documentation and PyPI links from README markdown text."""
+    import re as _re
+    docs = None
+    pypi = None
+    m = _re.search(r"https://frequenz[-\w\.]+/frequenz-sdk-python/?", md_text)
+    if m:
+        docs = m.group(0)
+    m2 = _re.search(r"https://pypi\.org/project/[\w\-_.]+/?", md_text)
+    if m2:
+        pypi = m2.group(0)
+    return docs, pypi
+
 def extract_sections(soup: BeautifulSoup):
     # Build a mapping of h2/h3 section -> content (text + code)
     sections = {}
@@ -127,6 +188,41 @@ def extract_sections(soup: BeautifulSoup):
         elif current is not None and getattr(el, "name", None) in ("p", "ul", "ol", "pre"):
             sections[current.lower()].append(el)
     return sections
+
+def sections_to_creativeworks(sections: dict, max_sections: int = 8, max_chars: int = 4000):
+    """Convert parsed sections into a list of CreativeWork entries for JSON‑LD.
+
+    Aggregates text from paragraphs/lists/code blocks. Truncates long content.
+    """
+    works: List[dict] = []
+    count = 0
+    for title_lc, elements in sections.items():
+        # Skip very short pseudo titles
+        if not title_lc or len(title_lc) < 3:
+            continue
+        # Reconstruct text content
+        parts: List[str] = []
+        for el in elements:
+            try:
+                t = el.get_text("\n", strip=True)
+                if t:
+                    parts.append(t)
+            except Exception:
+                continue
+        text = "\n\n".join(parts).strip()
+        if not text:
+            continue
+        if len(text) > max_chars:
+            text = text[: max_chars - 1] + "…"
+        works.append({
+            "@type": "CreativeWork",
+            "name": title_lc,
+            "text": text,
+        })
+        count += 1
+        if count >= max_sections:
+            break
+    return works
 
 def first_paragraph(soup: BeautifulSoup) -> str:
     p = soup.find("p")
@@ -301,9 +397,27 @@ def main():
     installs = find_install_instructions(soup) or ["pip install frequenz-sdk"]
     features = guess_features(sections)
     examples = collect_code_examples(soup)
-    py_versions = [v.strip() for v in args.python_versions.split(",") if v.strip()]
+    # Try to discover supported platforms & links from README
+    detected_py, os_name, arch = parse_supported_platforms(md)
+    docs_link, pypi_link = parse_links(md)
+    # Final python versions: prefer detected, else CLI default
+    py_versions = detected_py or [v.strip() for v in args.python_versions.split(",") if v.strip()]
 
     jsonld = build_jsonld(name, desc, installs, features, examples, args.license_url, py_versions)
+    # Add section-level creative works for improved retrieval
+    has_part = sections_to_creativeworks(sections)
+    if has_part:
+        jsonld["hasPart"] = has_part
+    if os_name:
+        jsonld["operatingSystem"] = os_name
+    if arch:
+        jsonld["processorRequirements"] = arch
+    if docs_link:
+        jsonld["documentation"] = docs_link
+    if pypi_link:
+        jsonld["downloadUrl"] = pypi_link
+    # Issue tracker link (predictable from repository)
+    jsonld["issueTracker"] = "https://github.com/frequenz-floss/frequenz-sdk-python/issues"
     Path(args.out).write_text(json.dumps(jsonld, indent=2), encoding="utf-8")
     print(f"Wrote {args.out}")
 

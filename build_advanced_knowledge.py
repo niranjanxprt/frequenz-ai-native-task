@@ -131,9 +131,9 @@ def chunks_from_v2(data: Dict) -> List[Dict]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--snapshot", required=True, help="Path to the repo snapshot TXT file")
-    ap.add_argument("--out", default="project_knowledge_v2.jsonld")
-    ap.add_argument("--chunks", default="advanced_chunks.jsonl")
-    ap.add_argument("--dot", default="project_knowledge_v2.dot", help="Path to write Graphviz DOT")
+    ap.add_argument("--out", default="data/project_knowledge_v2.jsonld")
+    ap.add_argument("--chunks", default="data/advanced_chunks.jsonl")
+    ap.add_argument("--dot", default="data/project_knowledge_v2.dot", help="Path to write Graphviz DOT")
     ap.add_argument("--svg", default=None, help="Optional path to write SVG (requires Graphviz 'dot')")
     args = ap.parse_args()
 

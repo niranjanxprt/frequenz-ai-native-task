@@ -53,6 +53,11 @@ def build_nodes_edges(data: dict):
         ("programmingLanguage", "language"),
         ("codeRepository", "codeRepository"),
         ("license", "license"),
+        ("documentation", "documentation"),
+        ("downloadUrl", "download"),
+        ("issueTracker", "issues"),
+        ("operatingSystem", "os"),
+        ("processorRequirements", "arch"),
     ]:
         val = data.get(key)
         if val:
