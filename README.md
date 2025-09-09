@@ -180,20 +180,15 @@ make app-advanced      # Start advanced app
 ### Testing
 
 ```bash
-# Run all tests and quality checks
+# Run all tests and quality checks (combined compliance + optional quality gates)
 make test
 python scripts/run_tests.py
 
-# Run specific test types
-python scripts/run_tests.py --skip-lint      # Skip linting
-python scripts/run_tests.py --skip-tests     # Skip unit tests
-python scripts/run_tests.py --skip-compliance # Skip compliance tests
+# Run only the consolidated compliance test
+python tests/test_compliance.py -v
 
-# Run hiring task compliance validation
-python test_queries.py
-
-# Run unit tests only
-python -m unittest discover -s tests -v
+# Optional: include Streamlit smoke tests (launch apps headlessly)
+RUN_STREAMLIT_SMOKE=1 python tests/test_compliance.py -v
 ```
 
 ### Code Quality
@@ -239,6 +234,10 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │   ├── 📈 knowledge_graph.dot             # DOT visualization file
 │   ├── 📈 knowledge_graph.svg             # SVG visualization file
 │   └── 📝 .gitkeep                        # Keep directory in git
+│
+├── 📂 temp/                               # 🧪 RUNTIME (ignored by git)
+│   ├── 📁 .run/                           # Logs + PIDs for local runs
+│   └── ⚙️  .streamlit/config.toml         # Streamlit theme (kept in git)
 │
 ├── 📂 tests/                              # 🧪 TESTING SUITE
 │   └── 🧪 test_compliance.py              # Hiring task compliance tests
