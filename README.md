@@ -243,7 +243,6 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │
 ├── 📂 data/                               # 📊 GENERATED DATA & OUTPUTS
 │   ├── 📊 project_knowledge.jsonld        # Primary knowledge graph
-│   ├── 📊 project_knowledge_v2.jsonld     # Enhanced knowledge graph  
 │   ├── 📈 knowledge_graph.dot             # DOT visualization file
 │   ├── 📈 knowledge_graph.svg             # SVG visualization file
 │   └── 📝 .gitkeep                        # Keep directory in git

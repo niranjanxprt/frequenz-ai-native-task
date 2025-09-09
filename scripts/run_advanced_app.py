@@ -47,7 +47,8 @@ def kill_existing_process(pid_file: Path):
 
 def run_streamlit_app(port: int, run_dir: Path, streamlit_dir: Path):
     """Run Streamlit app with proper configuration"""
-    app_file = "apps/advanced.py"  # Updated path for new structure
+    # Correct path to the advanced app within src/
+    app_file = "src/apps/app_advanced.py"
     pid_file = run_dir / f"streamlit_advanced.{port}.pid"
     log_file = run_dir / f"streamlit_advanced.{port}.log"
     
