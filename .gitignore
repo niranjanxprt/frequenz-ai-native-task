@@ -51,8 +51,6 @@ tmp/
 # All temporary files should go to temp/ directory
 # But keep the temp/ directory structure tracked
 temp/
-!temp/.streamlit/
-!temp/.streamlit/config.toml
 !temp/README.md
 
 # Generated visualization artifacts (moved to data/)

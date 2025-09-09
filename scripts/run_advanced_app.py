@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Run the advanced Streamlit app with sane defaults, logs, and PID control.
+Uses .streamlit/config.toml for branding and stores runtime files in temp/.
 
 Usage:
   python scripts/run_advanced_app.py              # start on port 8503
@@ -20,7 +21,7 @@ def setup_directories():
     """Ensure temp directories exist and return run + streamlit dirs."""
     temp_dir = Path("temp")
     run_dir = temp_dir / ".run"
-    streamlit_dir = temp_dir / ".streamlit"
+    streamlit_dir = Path(".streamlit")
 
     temp_dir.mkdir(exist_ok=True)
     run_dir.mkdir(exist_ok=True)

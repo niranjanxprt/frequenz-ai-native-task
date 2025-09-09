@@ -61,8 +61,8 @@ def main():
         print("\n📋 CODE QUALITY & FORMATTING")
         print("-" * 30)
 
-        # Ruff linting
-        results.append(run_command(["ruff", "check", "*.py"], "Code linting"))
+        # Ruff linting (entire repo)
+        results.append(run_command(["ruff", "check", "."], "Code linting"))
 
         # Ruff formatting check
         results.append(

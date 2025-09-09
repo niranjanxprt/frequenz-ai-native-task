@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Cross-platform Python script to run the basic Streamlit app with proper configuration.
-Uses temp/.streamlit/config.toml for branding and stores all runtime files in temp/
+Uses .streamlit/config.toml for branding and stores runtime files in temp/.
 """
 
 import os
@@ -16,7 +16,7 @@ def setup_directories():
     """Ensure temp directories exist"""
     temp_dir = Path("temp")
     run_dir = temp_dir / ".run"
-    streamlit_dir = temp_dir / ".streamlit"
+    streamlit_dir = Path(".streamlit")
 
     temp_dir.mkdir(exist_ok=True)
     run_dir.mkdir(exist_ok=True)

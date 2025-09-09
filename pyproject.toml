@@ -39,6 +39,7 @@ pyvis = ">=0.3.2"
 streamlit = ">=1.33.0"
 # Repository analysis for advanced query
 gitingest = ">=0.1.0"
+python-dotenv = ">=1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 # Linting and formatting
