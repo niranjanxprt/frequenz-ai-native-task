@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-AI-Enhanced Frequenz SDK Assistant
+Advanced Frequenz SDK Assistant
 Streamlined single chat interface with better spacing and message history
 Powered by Perplexity Sonar with Real-time Web Search & Citations
 
 Run:
-  streamlit run app_enhanced.py --server.port 8503
+  streamlit run app_advanced.py --server.port 8503
 """
 
 import sys

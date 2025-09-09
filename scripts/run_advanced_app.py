@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Run the AI‑enhanced Streamlit app with sane defaults, logs, and PID control.
+Run the advanced Streamlit app with sane defaults, logs, and PID control.
 
 Usage:
-  python scripts/run_enhanced_app.py              # start on port 8503
-  python scripts/run_enhanced_app.py -p 8600      # start on custom port
-  python scripts/run_enhanced_app.py -k           # kill existing process and exit
+  python scripts/run_advanced_app.py              # start on port 8503
+  python scripts/run_advanced_app.py -p 8600      # start on custom port
+  python scripts/run_advanced_app.py -k           # kill existing process and exit
 """
 
 import argparse
@@ -53,9 +53,9 @@ def kill_existing_process(pid_file: Path):
 
 def run_streamlit_app(port: int, run_dir: Path, streamlit_dir: Path) -> bool:
     """Start Streamlit for the enhanced app headlessly on the given port."""
-    app_file = "src/apps/app_enhanced.py"
-    pid_file = run_dir / f"streamlit_enhanced.{port}.pid"
-    log_file = run_dir / f"streamlit_enhanced.{port}.log"
+    app_file = "src/apps/app_advanced.py"
+    pid_file = run_dir / f"streamlit_advanced.{port}.pid"
+    log_file = run_dir / f"streamlit_advanced.{port}.log"
 
     # Stop any previous instance
     kill_existing_process(pid_file)
@@ -82,7 +82,7 @@ def run_streamlit_app(port: int, run_dir: Path, streamlit_dir: Path) -> bool:
         "false",
     ]
 
-    print(f"🤖 Starting AI‑enhanced app on port {port}…")
+    print(f"🚀 Starting advanced app on port {port}…")
     print(f"📝 Logs: {log_file}")
     try:
         with open(log_file, "w") as log:
@@ -95,7 +95,7 @@ def run_streamlit_app(port: int, run_dir: Path, streamlit_dir: Path) -> bool:
                 text=True,
             )
         pid_file.write_text(str(proc.pid))
-        print("✅ Enhanced app started!")
+        print("✅ Advanced app started!")
         print(f"🌐 Open: http://127.0.0.1:{port}")
         print(f"🆔 PID: {proc.pid}")
         print(f"📁 Runtime: {run_dir}")
@@ -114,7 +114,7 @@ def main():
     run_dir, streamlit_dir = setup_directories()
 
     if args.kill:
-        kill_existing_process(run_dir / f"streamlit_enhanced.{args.port}.pid")
+        kill_existing_process(run_dir / f"streamlit_advanced.{args.port}.pid")
         print("🛑 Process killed (if it was running)")
         return
 
@@ -124,4 +124,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

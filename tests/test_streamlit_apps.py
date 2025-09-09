@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smoke tests for the three Streamlit apps.
+Smoke tests for the two Streamlit apps (basic and advanced).
 
 Each test starts the app headlessly on a dedicated port,
 waits for the server to be ready, verifies key page content,
@@ -151,10 +151,8 @@ class TestStreamlitApps(unittest.TestCase):
         finally:
             stop_process(proc)
 
-    # Advanced app removed; keep tests for basic and AI-enhanced only.
-
-    def test_ai_enhanced_app_starts(self):
-        app = APPS_DIR / "app_enhanced.py"
+    def test_advanced_app_starts(self):
+        app = APPS_DIR / "app_advanced.py"
         self.assertTrue(app.exists(), f"Missing app: {app}")
         proc = run_streamlit(app, port=8503)
         try:

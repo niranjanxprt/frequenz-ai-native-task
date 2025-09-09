@@ -81,7 +81,7 @@ def main():
         "visualize.py",
         # moved apps live under src/apps
         "src/apps/app.py",
-        "src/apps/app_enhanced.py",
+        "src/apps/app_advanced.py",
         "test_queries.py",
     ]
     
