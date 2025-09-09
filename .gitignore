@@ -47,20 +47,25 @@ tmp/
 .env
 .env.*
 
-# Temporary and generated files (organized in temp/)
-# All temporary files should go to temp/ directory
-# But keep the temp/ directory structure tracked
+# Temporary and generated files
+# Local temporary directories and files
 temp/
-!temp/README.md
+.tmp/
+*.tmp
 
-# Generated visualization artifacts (moved to data/)
-data/*.dot
-data/*.svg
-data/*.png
+# Generated visualization artifacts (keep important ones, ignore temporary)
+# Keep the main knowledge graph outputs but ignore temporary visualizations
+data/temp_*.dot
+data/temp_*.svg
+data/temp_*.png
+data/debug_*.dot
+data/debug_*.svg
+data/debug_*.png
 
-# Legacy files (should not exist in root anymore)
-project_knowledge.dot
-project_knowledge.svg
+# Legacy files in root directory (these should be moved to data/)
+# Only ignore if they exist in root, not in data/
+/project_knowledge.dot
+/project_knowledge.svg
 
 # Browser-saved page assets (e.g., "<page>_files/" folders)
 *_files/

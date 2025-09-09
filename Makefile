@@ -151,13 +151,13 @@ compliance:
 app:
 	@echo "🌐 Starting basic Streamlit app..."
 	@echo "Navigate to: http://localhost:8501"
-	@$(PYTHON) -m streamlit run src/apps/app.py
+	@$(PYTHON) scripts/run_basic_app.py
 
 app-advanced:
 	@echo "🚀 Starting advanced Streamlit app..."
 	@echo "Navigate to: http://localhost:8503"
 	@echo "Configure Perplexity API key in sidebar or .env"
-	@$(PYTHON) -m streamlit run src/apps/app_advanced.py --server.port 8503
+	@$(PYTHON) scripts/run_advanced_app.py
 
 # Optional Streamlit smoke tests (headless) within compliance
 smoke:
@@ -226,11 +226,11 @@ poetry-test:
 
 poetry-extract:
 	@echo "📊 Extracting with Poetry..."
-	@poetry run extract --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python/v1.x.x/README.md
+	@poetry run python src/extract.py --repo-url https://raw.githubusercontent.com/frequenz-floss/frequenz-sdk-python/v1.x.x/README.md
 
 poetry-query:
 	@echo "❓ Querying with Poetry..."
-	@poetry run query "What is the Frequenz SDK for?"
+	@poetry run python src/query.py "What is the Frequenz SDK for?"
 
 # Quality gates for CI/CD
 ci-test: lint test compliance

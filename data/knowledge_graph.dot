@@ -1,0 +1,83 @@
+digraph G {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontsize=10];
+  root [label="Frequenz SDK for Python"] [shape="doubleoctagon"];
+  applicationCategory [label="Energy management / Microgrid orchestration"] [shape="box"];
+  programmingLanguage [label="Python"] [shape="box"];
+  codeRepository [label="https://github.com/frequenz-floss/frequenz-sdk-python"] [shape="box"];
+  license [label="https://opensource.org/licenses/MIT"] [shape="box"];
+  documentation [label="https://frequenz-floss.github.io/frequenz-sdk-python/"] [shape="box"];
+  downloadUrl [label="https://pypi.org/project/frequenz-sdk/"] [shape="box"];
+  issueTracker [label="https://github.com/frequenz-floss/frequenz-sdk-python/issues"] [shape="box"];
+  operatingSystem [label=" Ubuntu Linux 20.04"] [shape="box"];
+  processorRequirements [label=" amd64, arm64"] [shape="box"];
+  author [label="Frequenz"] [shape="ellipse"];
+  req_1 [label="Python 3.11"] [shape="box"];
+  req_2 [label="Python 3.12"] [shape="box"];
+  req_3 [label="Python 3.13"] [shape="box"];
+  install [label="Install the Frequenz SDK for Python"] [shape="folder"];
+  step_1 [label="python3 -m pip install frequenz-sdk"] [shape="box"];
+  example_1 [label="Example 1 (Python)"] [shape="component"];
+  q_1 [label="What is the Frequenz SDK for?"] [shape="oval"];
+  a_1 [label="A development kit to interact with the Frequenz development…"] [shape="box"];
+  q_2 [label="How do I install the SDK?"] [shape="oval"];
+  a_2 [label="Installation:\n- python3 -m pip install frequenz-sdk"] [shape="box"];
+  q_3 [label="Show me an example of how to use it."] [shape="oval"];
+  a_3 [label="python3 -m venv .venv\n. .venv/bin/activate"] [shape="box"];
+  q_4 [label="What license is it under?"] [shape="oval"];
+  a_4 [label="License: https://opensource.org/licenses/MIT"] [shape="box"];
+  q_5 [label="Which Python versions does it require?"] [shape="oval"];
+  a_5 [label="Requirements:\n- Python 3.11\n- Python 3.12\n- Python 3.13"] [shape="box"];
+  root -> applicationCategory [label="category"];
+
+  root -> programmingLanguage [label="language"];
+
+  root -> codeRepository [label="codeRepository"];
+
+  root -> license [label="license"];
+
+  root -> documentation [label="documentation"];
+
+  root -> downloadUrl [label="download"];
+
+  root -> issueTracker [label="issues"];
+
+  root -> operatingSystem [label="os"];
+
+  root -> processorRequirements [label="arch"];
+
+  root -> author [label="author"];
+
+  root -> req_1 [label="requires"];
+
+  root -> req_2 [label="requires"];
+
+  root -> req_3 [label="requires"];
+
+  root -> install [label="install"];
+
+  install -> step_1 [label="step 1"];
+
+  root -> example_1 [label="example"];
+
+  root -> q_1 [label="question"];
+
+  q_1 -> a_1 [label="answer"];
+
+  root -> q_2 [label="question"];
+
+  q_2 -> a_2 [label="answer"];
+
+  root -> q_3 [label="question"];
+
+  q_3 -> a_3 [label="answer"];
+
+  root -> q_4 [label="question"];
+
+  q_4 -> a_4 [label="answer"];
+
+  root -> q_5 [label="question"];
+
+  q_5 -> a_5 [label="answer"];
+
+}
