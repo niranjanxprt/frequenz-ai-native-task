@@ -26,7 +26,9 @@ sys.path.insert(0, str(src_dir))
 
 import query as q
 import visualize as viz
-import ai_integrations as ai
+# Note: Legacy AI integration was in a separate module, but
+# the advanced app doesn't use it directly anymore.
+# Removing the import avoids ModuleNotFoundError if the file is absent.
 
 try:
     import query_advanced
