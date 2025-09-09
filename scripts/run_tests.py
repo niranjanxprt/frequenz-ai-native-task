@@ -60,36 +60,13 @@ def main():
             "ruff", "format", "--check", "."
         ], "Code formatting"))
 
-    # 2. Hiring Task Compliance Tests (MOST IMPORTANT)
+    # 2. Hiring Task Compliance Tests (combined)
     if not args.skip_compliance:
-        print(f"\n🎯 HIRING TASK COMPLIANCE")
+        print(f"\n🎯 HIRING TASK COMPLIANCE (combined)")
         print("-" * 30)
-        
-        # Run comprehensive compliance tests
-        results.append(run_command([
-            "python", "tests/test_compliance.py"
-        ], "Hiring task compliance"))
+        results.append(run_command(["python", "tests/test_compliance.py"], "Compliance tests"))
 
-    # 3. Basic Syntax Checks (fast, always run)
-    if not args.fast:
-        print(f"\n🔍 SYNTAX VALIDATION")
-        print("-" * 30)
-    
-    python_files = [
-        "extract.py",
-        "query.py",
-        "visualize.py",
-        # moved apps live under src/apps
-        "src/apps/app.py",
-        "src/apps/app_advanced.py",
-        "test_queries.py",
-    ]
-    
-    for py_file in python_files:
-        if Path(py_file).exists():
-            results.append(run_command([
-                "python", "-m", "py_compile", py_file
-            ], f"Syntax check: {py_file}"))
+    # 3. Basic Syntax Checks moved into compliance test
 
     # 5. Final Summary
     print(f"\n{'=' * 50}")
