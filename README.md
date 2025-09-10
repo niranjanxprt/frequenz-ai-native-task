@@ -147,6 +147,21 @@ pip install -r requirements.txt
 
 ## 🗺 Architecture & Repository Analysis
 
+### Repository Visualization
+
+For quick project visualization, you can use **[GitDiagram.com](https://gitdiagram.com/)** to turn this GitHub repository into an interactive diagram. Simply paste the repository URL to get an instant visual overview of the project structure and relationships.
+
+**GitDiagram Features:**
+- 📊 Interactive repository structure visualization
+- 🔍 Quick project exploration and navigation
+- 🎯 Ideal for understanding project layout at a glance
+- 🌐 Works with any GitHub repository
+
+**Usage:** Visit [gitdiagram.com](https://gitdiagram.com/) and enter:
+```
+https://github.com/niranjanxprt/frequenz-ai-native-task
+```
+
 ### SDK Architecture Diagram
 
 This project includes a detailed architecture diagram of the Frequenz SDK:
@@ -389,6 +404,7 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 │   ├── 📚 hiring_task/                    # Hiring task requirements
 │   │   ├── HiringTask.md                  # Task description
 │   │   └── Hiring_Task_PDF.pdf            # Original PDF
+│   ├── 📈 marketing_strategy.md           # Comprehensive AI-native marketing strategy
 │   └── 📚 examples/                       # Usage examples
 │
 ├── 📲 assets/                             # 🖼️  STATIC ASSETS
@@ -410,7 +426,7 @@ frequenz_ai_native_task/                    # 🏠 Project Root
 - **`data/`** - Generated knowledge graphs and visualizations
 - **`tests/`** - Hiring task compliance tests
 - **`scripts/`** - Utility scripts and automation
-- **`docs/`** - Project documentation and requirements
+- **`docs/`** - Project documentation, requirements, and marketing strategy
 - **`assets/`** - Static files (logos, images, styles)
 - **`temp/`** - Runtime (ephemeral logs/PIDs only)
 
@@ -481,6 +497,90 @@ This implementation fully satisfies all hiring task requirements:
 - ✅ **Tested Compatibility**: CI/CD tests across Python versions
 - ✅ **Modern Features**: Uses typing and dataclasses where appropriate
 - ✅ **Backward Compatibility**: No bleeding-edge syntax requirements
+
+## 📈 Marketing Strategy & Best Practices
+
+### AI-Native Marketing Framework
+
+This project includes a comprehensive marketing strategy document at [`docs/marketing_strategy.md`](docs/marketing_strategy.md) that provides actionable guidance for accelerating SDK adoption through modern marketing practices.
+
+#### 🎯 **Key Marketing Areas Covered**
+
+**1. E-E-A-T Optimization (AI Discoverability)**
+- **Experience**: Real-world usage demonstrations with quantified metrics
+- **Expertise**: Technical depth with domain knowledge and algorithm documentation
+- **Authoritativeness**: Industry standards compliance and professional recognition
+- **Trustworthiness**: Security audits, transparency, and reliability guarantees
+
+**2. Documentation Excellence**
+- Interactive examples with runnable code (Binder/Colab integration)
+- Repository visualization tools like [GitDiagram.com](https://gitdiagram.com/) for project exploration
+- Comprehensive API documentation with clear user journeys
+- FAQ sections optimized for AI extraction and developer questions
+- Video tutorials and multi-format content strategy
+
+**3. Community Building**
+- Berlin-focused initiatives and energy sector partnerships
+- Developer engagement through Discord/Slack with regular office hours
+- Good-first-issue labeling and mentorship programs
+- Conference presence at PyCon, EuroPython, and energy tech events
+
+**4. Content Marketing Portfolio**
+- Technical blog posts with cross-posting to Dev.to/Medium
+- 60-second demo videos for social media engagement
+- Open-source showcase participation and Hacker News releases
+- Strategic Reddit engagement in relevant developer communities
+
+#### 🚀 **Recommended Marketing Improvements**
+
+Based on industry best practices, here are actionable steps to enhance project visibility:
+
+**Immediate Actions (High ROI)**
+- [ ] Add JSON-LD schema markup to documentation homepage for AI discoverability
+- [ ] Create canonical demo video showcasing core functionality (< 2 minutes)
+- [ ] Implement comprehensive FAQ section with developer-focused questions
+- [ ] Add "good first issue" labels and contribution templates for new developers
+- [ ] Set up automated social media posting for major releases
+
+**Short-term Goals (1-3 months)**
+- [ ] Establish regular content calendar with bi-weekly technical blog posts
+- [ ] Create interactive Jupyter notebooks hosted on Binder/Google Colab
+- [ ] Launch community Discord/Slack with structured channels and moderation
+- [ ] Develop case study templates with quantified performance metrics
+- [ ] Implement CI testing for all documentation examples to prevent code rot
+
+**Medium-term Objectives (3-6 months)**
+- [ ] Launch Berlin energy tech meetup series with SDK workshops
+- [ ] Establish partnerships with energy companies for real-world case studies
+- [ ] Create comprehensive video tutorial series covering advanced use cases
+- [ ] Implement SEO optimization with schema.org markup across all documentation
+- [ ] Develop contributor recognition system with badges and achievements
+
+**Long-term Vision (6-12 months)**
+- [ ] Host annual "Energy x AI" conference with SDK track
+- [ ] Establish academic partnerships for research collaboration and citations
+- [ ] Create certification program for SDK proficiency
+- [ ] Launch developer advocate program with community champions
+- [ ] Implement comprehensive analytics dashboard for community health metrics
+
+### 📊 Marketing Success Metrics
+
+**Adoption Tracking**
+- PyPI download statistics and geographic distribution
+- GitHub stars, forks, and contributor growth rates
+- Documentation page views and user engagement metrics
+
+**Community Health**
+- Issue response times and resolution rates  
+- Pull request merge velocity and community contributions
+- Social media engagement and brand mention tracking
+
+**Content Performance**
+- Blog post engagement and technical content sharing
+- Video view counts and retention rates across platforms
+- Conference talk attendance and follow-up engagement
+
+See the complete marketing strategy document at [`docs/marketing_strategy.md`](docs/marketing_strategy.md) for detailed implementation guidance, technical specifications, and measurable success frameworks.
 
 ## 🚀 Future Improvements
 
